@@ -24,15 +24,15 @@ io.on('connection', socket => {
     }
   });
 
-  socket.on('incomingOffer', payload => {
+  socket.on('offer', payload => {
     io.to(payload.target).emit('offer', payload);
   });
 
-  socket.on('outgoingAnswer', payload => {
+  socket.on('answer', payload => {
     io.to(payload.target).emit('answer', payload);
   });
 
-  socket.on('iceCandidate', incoming => {
+  socket.on('ice-candidate', incoming => {
     io.to(incoming.target).emit('ice-candidate', incoming.candidate);
   });
 });
