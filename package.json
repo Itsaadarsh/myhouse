@@ -1,0 +1,14 @@
+{
+  "name": "myhouse",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Itsaadarsh/myhouse.git",
+  "author": "Itsaadarsh <aadarsh-s@outlook.com>",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "wrtc": "^0.4.7"
+  }
+}
