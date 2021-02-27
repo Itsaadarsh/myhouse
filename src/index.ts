@@ -1,2 +1,3 @@
-import { version } from 'mediasoup';
-console.log(version);
+import config from './config';
+
+console.log(config);

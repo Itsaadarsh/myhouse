@@ -19,9 +19,11 @@
   },
   "homepage": "https://github.com/Itsaadarsh/myhouse#readme",
   "dependencies": {
+    "httpolyglot": "^0.1.2",
     "mediasoup": "^3.6.32"
   },
   "devDependencies": {
+    "@types/express": "^4.17.11",
     "nodemon": "^2.0.7",
     "typescript": "^4.2.2"
   }
