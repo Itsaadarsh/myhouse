@@ -3,7 +3,7 @@ import CONFIGTYPES from './types/config.types';
 
 const config: CONFIGTYPES = {
   listenIp: '0.0.0.0',
-  listenPort: 3016,
+  listenPort: 4000,
   sslCrt: '../ssl/cert.pem',
   sslKey: '../ssl/key.pem',
 
