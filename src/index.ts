@@ -4,11 +4,11 @@ import path from 'path';
 import fs from 'fs';
 import { Worker } from 'mediasoup/lib/types';
 import ALLROOMS from './types/allRooms.types.';
-import { createWorker } from 'mediasoup';
 import { Server } from 'socket.io';
 import Room from './Room';
 import Peer from './Peer';
 import mySocket from './utils/customSocket';
+import { createWorkers } from './utils/createWorker';
 
 const https = require('httpolyglot');
 const app = express();
@@ -24,31 +24,10 @@ httpsServer.listen(config.listenPort, () => console.log(`Server listening at POR
 
 let workers: Array<Worker> = [];
 let nextWorkerIndex: number = 0;
-
 let roomList: ALLROOMS = {};
 
-const createWorkers = async () => {
-  let { numWorkers } = config.mediasoup;
-
-  for (let i = 0; i < numWorkers; i++) {
-    const worker = await createWorker({
-      logLevel: config.mediasoup.worker.logLevel,
-      logTags: config.mediasoup.worker.logTags,
-      rtcMinPort: config.mediasoup.worker.rtcMinPort,
-      rtcMaxPort: config.mediasoup.worker.rtcMaxPort,
-    });
-
-    worker.on('died', () => {
-      console.error('MS worker died, exiting..', worker.pid);
-      setTimeout(() => process.exit(1), 2000);
-    });
-
-    workers.push(worker);
-  }
-};
-
 (async () => {
-  await createWorkers();
+  await createWorkers(workers);
 })();
 
 io.on('connection', (socket: mySocket) => {
@@ -73,6 +52,15 @@ io.on('connection', (socket: mySocket) => {
     roomList[roomID].addPeer(new Peer(socket.id, name));
     socket.roomID = roomID;
     callback(roomList[roomID]);
+  });
+
+  socket.on('getProducers', () => {
+    console.log(`------GET PRODUCER------ NAME : ${roomList[socket.roomID].getPeers()[socket.id].name}`);
+
+    // Sends all the current producers in the room to the newly joined user
+    if (!roomList[socket.roomID]) return;
+    const getProducerList = roomList[socket.roomID].getProducerList(socket.id);
+    socket.emit('newProducers', getProducerList);
   });
 });
 

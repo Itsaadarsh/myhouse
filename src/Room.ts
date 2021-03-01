@@ -26,6 +26,17 @@ class Room implements ROOM {
   addPeer(peer: PEER) {
     this.peers[peer.id] = peer;
   }
+
+  getPeers() {
+    return this.peers;
+  }
+
+  getProducerList(socketID: string){
+    const producerList = [];
+    Object.keys(this.peers).forEach(peer: PEER => {
+      peer.
+    })
+  }
 }
 
 export default Room;
