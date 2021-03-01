@@ -1,13 +1,14 @@
 import config from './config';
 import express from 'express';
-// import mediasoup from 'mediasoup';
 import path from 'path';
 import fs from 'fs';
 import { Worker } from 'mediasoup/lib/types';
-import { ROOM } from './types/allRooms.types.';
+import ALLROOMS from './types/allRooms.types.';
 import { createWorker } from 'mediasoup';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import Room from './Room';
+import Peer from './Peer';
+import mySocket from './utils/customSocket';
 
 const https = require('httpolyglot');
 const app = express();
@@ -24,7 +25,7 @@ httpsServer.listen(config.listenPort, () => console.log(`Server listening at POR
 let workers: Array<Worker> = [];
 let nextWorkerIndex: number = 0;
 
-let roomList = new Map<string, ROOM>();
+let roomList: ALLROOMS = {};
 
 const createWorkers = async () => {
   let { numWorkers } = config.mediasoup;
@@ -50,16 +51,28 @@ const createWorkers = async () => {
   await createWorkers();
 })();
 
-io.on('connection', (socket: Socket) => {
-  socket.on('createRoom', async ({ roomID }, callback) => {
-    if (roomList.has(roomID)) {
+io.on('connection', (socket: mySocket) => {
+  socket.on('createRoom', async ({ roomID }: { roomID: string }, callback) => {
+    if (roomList[roomID]) {
       callback('Already exists');
     } else {
       console.log('-------ROOM CREATED---------', roomID);
       const worker = await getMSWorker();
-      roomList.set(roomID, new Room(roomID, worker, io));
+      roomList[roomID] = new Room(roomID, worker, io);
       callback(roomID);
     }
+  });
+
+  socket.on('join', ({ roomID, name }: { roomID: string; name: string }, callback) => {
+    console.log(`------USER JOINED------ \n ROOM ID : ${roomID} || USERNAME : ${name}`);
+    if (!roomList[roomID]) {
+      return callback({
+        error: 'Room does not exist!',
+      });
+    }
+    roomList[roomID].addPeer(new Peer(socket.id, name));
+    socket.roomID = roomID;
+    callback(roomList[roomID]);
   });
 });
 

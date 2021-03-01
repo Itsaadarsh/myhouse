@@ -1,7 +1,9 @@
-import { Router } from 'mediasoup/lib/types';
+import { Consumer, Producer, Router, Transport } from 'mediasoup/lib/types';
+import Peer from 'src/Peer';
+import Room from '../Room';
 
 export default interface ALLROOMS {
-  [roomID: string]: ROOM;
+  [roomID: string]: Room;
 }
 
 export interface ROOM {
@@ -11,11 +13,19 @@ export interface ROOM {
 }
 
 export type PEERTYPE = {
-  [peerID: string]: PEER;
+  [peerID: string]: Peer;
 };
 
 export interface PEER {
   id: string;
   name: string;
-  master: boolean;
+  transports: {
+    [transportID: string]: Transport;
+  };
+  consumers: {
+    [consumerID: string]: Consumer;
+  };
+  producers: {
+    [producerID: string]: Producer;
+  };
 }

@@ -1,12 +1,12 @@
 import { Router, Worker } from 'mediasoup/lib/types';
 import config from './config';
-import { PEER } from './types/allRooms.types.';
+import { PEER, PEERTYPE, ROOM } from './types/allRooms.types.';
 
-class Room {
-  id: string;
+class Room implements ROOM {
+  readonly id: string;
   router: Router;
-  peers: Map<string, PEER>;
-  io: any;
+  readonly peers: PEERTYPE;
+  readonly io: any;
 
   constructor(roomID: string, worker: Worker, io: any) {
     this.id = roomID;
@@ -19,9 +19,13 @@ class Room {
         this.router = router;
       });
 
-    this.peers = new Map<string, PEER>();
+    this.peers = {};
     this.io = io;
+  }
+
+  addPeer(peer: PEER) {
+    this.peers[peer.id] = peer;
   }
 }
 
-export default module.exports = Room;
+export default Room;
