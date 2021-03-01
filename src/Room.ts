@@ -31,11 +31,19 @@ class Room implements ROOM {
     return this.peers;
   }
 
-  getProducerList(socketID: string){
-    const producerList = [];
-    Object.keys(this.peers).forEach(peer: PEER => {
-      peer.
-    })
+  getProducerList() {
+    const producerList: Array<{ producerID: string }> = [];
+    let producer: any;
+    for (let peer in this.peers) {
+      for (producer in this.peers[peer].producers) {
+        producerList.push({ producerID: producer.id });
+      }
+    }
+    return producerList;
+  }
+
+  getRTPCapabilities() {
+    return this.router.rtpCapabilities;
   }
 }
 

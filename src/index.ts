@@ -59,8 +59,22 @@ io.on('connection', (socket: mySocket) => {
 
     // Sends all the current producers in the room to the newly joined user
     if (!roomList[socket.roomID]) return;
-    const getProducerList = roomList[socket.roomID].getProducerList(socket.id);
+    const getProducerList = roomList[socket.roomID].getProducerList();
     socket.emit('newProducers', getProducerList);
+  });
+
+  socket.on('getRouterRTPCapabilities', (_, callback) => {
+    console.log(
+      `-------GET ROUTER RTP CAPABILITIES------ NAME: ${roomList[socket.roomID].getPeers()[socket.id].name}`
+    );
+
+    try {
+      callback(roomList[socket.roomID].getRTPCapabilities());
+    } catch (err) {
+      callback({
+        error: err.message,
+      });
+    }
   });
 });
 
