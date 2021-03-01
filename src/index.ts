@@ -2,16 +2,16 @@ import config from './config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { Worker } from 'mediasoup/lib/types';
 import ALLROOMS from './types/allRooms.types.';
-import { Server } from 'socket.io';
 import Room from './Room';
 import Peer from './Peer';
 import mySocket from './utils/customSocket';
-import { createWorkers } from './utils/createWorker';
 import customLogs from './utils/customConsoleLogs';
-
+import { Server } from 'socket.io';
+import { DtlsParameters, Worker } from 'mediasoup/lib/types';
+import { createWorkers } from './utils/createWorker';
 const https = require('httpolyglot');
+
 const app = express();
 const options = {
   keys: fs.readFileSync(path.join(__dirname, config.sslKey)),
@@ -19,9 +19,10 @@ const options = {
 };
 
 const httpsServer = https.createServer(options, app);
-app.use(express.static(path.join(__dirname, '..', 'public')));
 const io = new Server(httpsServer);
 httpsServer.listen(config.listenPort, () => console.log(`Server listening at PORT : ${config.listenPort}`));
+
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 let workers: Array<Worker> = [];
 let nextWorkerIndex: number = 0;
@@ -86,6 +87,19 @@ io.on('connection', (socket: mySocket) => {
       });
     }
   });
+
+  socket.on(
+    'connectTransport',
+    async (
+      { transportID, dtlsParameters }: { transportID: string; dtlsParameters: DtlsParameters },
+      callback
+    ) => {
+      customLogs('CONNECT TRANSPORT', roomList, socket);
+      if (!roomList[socket.roomID]) return;
+      await roomList[socket.roomID].connectPeerTransport(socket.id, transportID, dtlsParameters);
+      callback('Success');
+    }
+  );
 });
 
 const getMSWorker = () => {

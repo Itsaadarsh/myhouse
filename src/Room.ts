@@ -1,6 +1,6 @@
-import { Router, Worker } from 'mediasoup/lib/types';
+import { DtlsParameters, Router, Worker } from 'mediasoup/lib/types';
 import config from './config';
-import { PEER, PEERTYPE, ROOM } from './types/allRooms.types.';
+import { PEERTYPE, ROOM } from './types/allRooms.types.';
 
 class Room implements ROOM {
   readonly id: string;
@@ -23,7 +23,7 @@ class Room implements ROOM {
     this.io = io;
   }
 
-  addPeer(peer: PEER) {
+  addPeer(peer: any) {
     this.peers[peer.id] = peer;
   }
 
@@ -87,6 +87,11 @@ class Room implements ROOM {
         dtlsParameters: transport.dtlsParameters,
       },
     };
+  }
+
+  async connectPeerTransport(socketID: string, transportID: string, dtlsParameters: DtlsParameters) {
+    if (!this.peers[socketID]) return;
+    await this.peers[socketID].connectTransport(transportID, dtlsParameters);
   }
 }
 

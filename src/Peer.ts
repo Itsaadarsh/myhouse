@@ -1,16 +1,16 @@
-import { Consumer, Producer, Transport } from 'mediasoup/lib/types';
+import { Consumer, DtlsParameters, Producer, Transport } from 'mediasoup/lib/types';
 import { PEER } from './types/allRooms.types.';
 
 class Peer implements PEER {
-  id: string;
-  name: string;
-  transports: {
+  readonly id: string;
+  readonly name: string;
+  readonly transports: {
     [transportID: string]: Transport;
   };
-  consumers: {
+  readonly consumers: {
     [consumerID: string]: Consumer;
   };
-  producers: {
+  readonly producers: {
     [producerID: string]: Producer;
   };
   constructor(socketID: string, name: string) {
@@ -23,6 +23,11 @@ class Peer implements PEER {
 
   addTransport(transport: Transport) {
     this.transports[transport.id] = transport;
+  }
+
+  async connectTransport(transportID: string, dtlsParameters: DtlsParameters) {
+    if (!this.transports[transportID]) return;
+    await this.transports[transportID].connect({ dtlsParameters });
   }
 }
 
