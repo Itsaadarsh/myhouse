@@ -9,6 +9,7 @@ import Room from './Room';
 import Peer from './Peer';
 import mySocket from './utils/customSocket';
 import { createWorkers } from './utils/createWorker';
+import customLogs from './utils/customConsoleLogs';
 
 const https = require('httpolyglot');
 const app = express();
@@ -55,8 +56,7 @@ io.on('connection', (socket: mySocket) => {
   });
 
   socket.on('getProducers', () => {
-    console.log(`------GET PRODUCER------ NAME : ${roomList[socket.roomID].getPeers()[socket.id].name}`);
-
+    customLogs('GET PRODUCER', roomList, socket);
     // Sends all the current producers in the room to the newly joined user
     if (!roomList[socket.roomID]) return;
     const getProducerList = roomList[socket.roomID].getProducerList();
@@ -64,13 +64,23 @@ io.on('connection', (socket: mySocket) => {
   });
 
   socket.on('getRouterRTPCapabilities', (_, callback) => {
-    console.log(
-      `-------GET ROUTER RTP CAPABILITIES------ NAME: ${roomList[socket.roomID].getPeers()[socket.id].name}`
-    );
-
+    customLogs('GET ROUTER RTP CAPABILITIES', roomList, socket);
     try {
       callback(roomList[socket.roomID].getRTPCapabilities());
     } catch (err) {
+      callback({
+        error: err.message,
+      });
+    }
+  });
+
+  socket.on('createwebRTCTransport', async (_, callback) => {
+    customLogs('CREATE WEBRTC TRANSPORTs', roomList, socket);
+    try {
+      const { params } = await roomList[socket.roomID].createWebRTCTransport(socket.id);
+      callback(params);
+    } catch (err) {
+      console.error(err);
       callback({
         error: err.message,
       });

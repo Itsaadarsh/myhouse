@@ -20,6 +20,10 @@ class Peer implements PEER {
       (this.consumers = {}),
       (this.producers = {});
   }
+
+  addTransport(transport: Transport) {
+    this.transports[transport.id] = transport;
+  }
 }
 
 export default Peer;

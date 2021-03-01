@@ -45,6 +45,49 @@ class Room implements ROOM {
   getRTPCapabilities() {
     return this.router.rtpCapabilities;
   }
+
+  async createWebRTCTransport(socketID: string) {
+    const { initialAvailableOutgoingBitrate } = config.mediasoup.webRTCTransport;
+    const maxIncomingBitrate = 1500000;
+
+    const transport = await this.router.createWebRtcTransport({
+      listenIps: config.mediasoup.webRTCTransport.listenIps,
+      enableUdp: true,
+      enableTcp: true,
+      preferUdp: true,
+      initialAvailableOutgoingBitrate,
+    });
+
+    if (maxIncomingBitrate) {
+      try {
+        await transport.setMaxIncomingBitrate(maxIncomingBitrate);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    transport.on('dtlsstatechange', dtlsState => {
+      if (dtlsState === 'closed') {
+        console.log(`------TRANSPORT CLOSED------- ${this.peers[socketID].name} CLOSED`);
+        transport.close();
+      }
+    });
+
+    transport.on('close', () => {
+      console.log(`------TRANSPORT CLOSED------- ${this.peers[socketID].name} CLOSED`);
+    });
+
+    console.log(`----ADDING TRANSPORT----- ${transport.id}`);
+    this.peers[socketID].addTransport(transport);
+    return {
+      params: {
+        id: transport.id,
+        iceParameters: transport.iceParameters,
+        iceCandidates: transport.iceCandidates,
+        dtlsParameters: transport.dtlsParameters,
+      },
+    };
+  }
 }
 
 export default Room;
