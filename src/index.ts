@@ -34,6 +34,8 @@ let roomList: ALLROOMS = {};
 
 io.on('connection', (socket: mySocket) => {
   socket.on('createRoom', async ({ roomID }: { roomID: string }, callback) => {
+    console.log(roomID);
+
     if (roomList[roomID]) {
       callback('Already exists');
     } else {
