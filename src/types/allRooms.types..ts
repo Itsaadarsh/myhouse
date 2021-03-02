@@ -26,6 +26,6 @@ export interface PEER {
     [consumerID: string]: Consumer;
   };
   producers: {
-    [producerID: string]: Producer;
+    [producerId: string]: Producer;
   };
 }

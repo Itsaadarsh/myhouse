@@ -40,11 +40,11 @@ class Room implements ROOM {
   }
 
   getProducerList() {
-    const producerList: Array<{ producerID: string }> = [];
+    const producerList: Array<{ producerId: string }> = [];
     let producer: any;
     for (let peer in this.peers) {
       for (producer in this.peers[peer].producers) {
-        producerList.push({ producerID: producer.id });
+        producerList.push({ producerId: producer.id });
       }
     }
     return producerList;
@@ -108,7 +108,7 @@ class Room implements ROOM {
       resolve(producer.id);
       this.brodCast(socketID, 'newProducers', [
         {
-          producerID: producer.id,
+          producerId: producer.id,
           producerSocketID: socketID,
         },
       ]);
@@ -118,7 +118,7 @@ class Room implements ROOM {
   brodCast(
     sockerID: string,
     eventName: string,
-    data: Array<{ producerID: string; producerSocketID: string }>
+    data: Array<{ producerId: string; producerSocketID: string }>
   ) {
     for (let otherID of Array.from(Object.keys(this.peers)).filter(id => id !== sockerID)) {
       this.io.to(otherID).emit(eventName, data);
@@ -128,17 +128,17 @@ class Room implements ROOM {
   async consume(
     socketID: string,
     consumerTransportID: string,
-    producerID: string,
+    producerId: string,
     rtpCapabilities: RtpCapabilities
   ) {
-    if (!this.router.canConsume({ producerId: producerID, rtpCapabilities })) {
+    if (!this.router.canConsume({ producerId: producerId, rtpCapabilities })) {
       console.error('Can not CONSUME');
       return;
     }
 
     const response = await this.peers[socketID].createConsumer(
       consumerTransportID,
-      producerID,
+      producerId,
       rtpCapabilities
     );
     response?.consumer.on('producerclose', () => {
@@ -155,8 +155,8 @@ class Room implements ROOM {
     delete this.peers[socketID];
   }
 
-  async closeProducer(socketID: string, producerID: string) {
-    this.peers[socketID].closeProducer(producerID);
+  async closeProducer(socketID: string, producerId: string) {
+    this.peers[socketID].closeProducer(producerId);
   }
 
   toJson() {

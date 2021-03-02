@@ -41,7 +41,7 @@ class RoomClient {
     this.producers = new Map();
 
     /**
-     * map that contains a mediatype as key and producer_id as value
+     * map that contains a mediatype as key and producerId as value
      */
     this.producerLabel = new Map();
 
@@ -83,7 +83,6 @@ class RoomClient {
       })
       .then(
         async function (e) {
-          console.log(e);
           const data = await this.socket.request('getRouterRtpCapabilities');
           let device = await this.loadDevice(data);
           this.device = device;
@@ -143,13 +142,13 @@ class RoomClient {
         'produce',
         async function ({ kind, rtpParameters }, callback, errback) {
           try {
-            const { producer_id } = await this.socket.request('produce', {
-              producerTransportId: this.producerTransport.id,
+            const { producerId } = await this.socket.request('produce', {
+              produceTransportID: this.producerTransport.id,
               kind,
               rtpParameters,
             });
             callback({
-              id: producer_id,
+              id: producerId,
             });
           } catch (err) {
             errback(err);
@@ -231,15 +230,15 @@ class RoomClient {
   initSockets() {
     this.socket.on(
       'consumerClosed',
-      function ({ consumer_id }) {
-        console.log('closing consumer:', consumer_id);
-        this.removeConsumer(consumer_id);
+      function ({ consumerID }) {
+        console.log('closing consumer:', consumerID);
+        this.removeConsumer(consumerID);
       }.bind(this)
     );
 
     /**
      * data: [ {
-     *  producer_id:
+     *  producerId:
      *  producer_socket_id:
      * }]
      */
@@ -247,8 +246,8 @@ class RoomClient {
       'newProducers',
       async function (data) {
         console.log('new producers', data);
-        for (let { producer_id } of data) {
-          await this.consume(producer_id);
+        for (let { producerId } of data) {
+          await this.consume(producerId);
         }
       }.bind(this)
     );
@@ -256,7 +255,6 @@ class RoomClient {
     this.socket.on(
       'disconnect',
       function () {
-        console.log('innnnnn');
         this.exit(true);
       }.bind(this)
     );
@@ -412,10 +410,9 @@ class RoomClient {
     }
   }
 
-  async consume(producer_id) {
+  async consume(producerId) {
     //let info = await roomInfo()
-
-    this.getConsumeStream(producer_id).then(
+    this.getConsumeStream(producerId).then(
       function ({ consumer, stream, kind }) {
         this.consumers.set(consumer.id, consumer);
 
@@ -457,8 +454,8 @@ class RoomClient {
     const { rtpCapabilities } = this.device;
     const data = await this.socket.request('consume', {
       rtpCapabilities,
-      consumerTransportId: this.consumerTransport.id, // might be
-      producerId,
+      consumerTransportID: this.consumerTransport.id, // might be
+      producerId: producerId,
     });
     const { id, kind, rtpParameters } = data;
 
@@ -484,17 +481,17 @@ class RoomClient {
       console.log('there is no producer for this type ' + type);
       return;
     }
-    let producer_id = this.producerLabel.get(type);
-    console.log(producer_id);
+    let producerId = this.producerLabel.get(type);
+    console.log(producerId);
     this.socket.emit('producerClosed', {
-      producer_id,
+      producerId,
     });
-    this.producers.get(producer_id).close();
-    this.producers.delete(producer_id);
+    this.producers.get(producerId).close();
+    this.producers.delete(producerId);
     this.producerLabel.delete(type);
 
     if (type !== mediaType.audio) {
-      let elem = document.getElementById(producer_id);
+      let elem = document.getElementById(producerId);
       elem.srcObject.getTracks().forEach(function (track) {
         track.stop();
       });
@@ -522,8 +519,8 @@ class RoomClient {
       console.log('there is no producer for this type ' + type);
       return;
     }
-    let producer_id = this.producerLabel.get(type);
-    this.producers.get(producer_id).pause();
+    let producerId = this.producerLabel.get(type);
+    this.producers.get(producerId).pause();
   }
 
   resumeProducer(type) {
@@ -531,18 +528,18 @@ class RoomClient {
       console.log('there is no producer for this type ' + type);
       return;
     }
-    let producer_id = this.producerLabel.get(type);
-    this.producers.get(producer_id).resume();
+    let producerId = this.producerLabel.get(type);
+    this.producers.get(producerId).resume();
   }
 
-  removeConsumer(consumer_id) {
-    let elem = document.getElementById(consumer_id);
+  removeConsumer(consumerID) {
+    let elem = document.getElementById(consumerID);
     elem.srcObject.getTracks().forEach(function (track) {
       track.stop();
     });
     elem.parentNode.removeChild(elem);
 
-    this.consumers.delete(consumer_id);
+    this.consumers.delete(consumerID);
   }
 
   exit(offline = false) {

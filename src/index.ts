@@ -63,10 +63,12 @@ io.on('connection', (socket: mySocket) => {
     // Sends all the current producers in the room to the newly joined user
     if (!roomList[socket.roomID!]) return;
     const getProducerList = roomList[socket.roomID!].getProducerList();
+    console.log('222222222222222222222222222222222222222222222222222222');
+    console.log(getProducerList);
     socket.emit('newProducers', getProducerList);
   });
 
-  socket.on('getRouterRTPCapabilities', (_, callback) => {
+  socket.on('getRouterRtpCapabilities', (_, callback) => {
     customLogs('GET ROUTER RTP CAPABILITIES', roomList, socket);
     try {
       callback(roomList[socket.roomID!].getRTPCapabilities());
@@ -77,7 +79,7 @@ io.on('connection', (socket: mySocket) => {
     }
   });
 
-  socket.on('createwebRTCTransport', async (_, callback) => {
+  socket.on('createWebRtcTransport', async (_, callback) => {
     customLogs('CREATE WEBRTC TRANSPORTs', roomList, socket);
     try {
       const { params } = await roomList[socket.roomID!].createWebRTCTransport(socket.id);
@@ -116,14 +118,14 @@ io.on('connection', (socket: mySocket) => {
       if (!roomList[socket.roomID!]) {
         return callback({ error: 'No ROOM found' });
       }
-      const producerID = await roomList[socket.roomID!].produce(
+      const producerId = await roomList[socket.roomID!].produce(
         socket.id,
         produceTransportID,
         rtpParameters,
         kind
       );
       customLogs(`PRODUCING || TYPE : ${kind}`, roomList, socket);
-      callback({ producerID });
+      callback({ producerId });
     }
   );
 
@@ -132,18 +134,20 @@ io.on('connection', (socket: mySocket) => {
     async (
       {
         consumerTransportID,
-        producerID,
+        producerId,
         rtpCapabilities,
-      }: { consumerTransportID: string; producerID: string; rtpCapabilities: RtpCapabilities },
+      }: { consumerTransportID: string; producerId: string; rtpCapabilities: RtpCapabilities },
       callback
     ) => {
+      console.log('1111111111111111111111111111111111111111');
+      console.log(producerId);
       const params = await roomList[socket.roomID!].consume(
         socket.id,
         consumerTransportID,
-        producerID,
+        producerId,
         rtpCapabilities
       );
-      customLogs(`CONSUMING || CONSUMER ID : ${params?.id} || PRODUCER ID : ${producerID}`, roomList, socket);
+      customLogs(`CONSUMING || CONSUMER ID : ${params?.id} || PRODUCER ID : ${producerId}`, roomList, socket);
       callback(params);
     }
   );
@@ -158,9 +162,9 @@ io.on('connection', (socket: mySocket) => {
     roomList[socket.roomID!].removePeer(socket.id);
   });
 
-  socket.on('producerClosed', ({ producerID }: { producerID: string }) => {
+  socket.on('producerClosed', ({ producerId }: { producerId: string }) => {
     customLogs(`PRODUCER CLOSED`, roomList, socket);
-    roomList[socket.roomID!].closeProducer(socket.id, producerID);
+    roomList[socket.roomID!].closeProducer(socket.id, producerId);
   });
 
   socket.on('exitRoom', async (_, callback) => {

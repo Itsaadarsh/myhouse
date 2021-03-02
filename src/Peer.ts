@@ -20,7 +20,7 @@ class Peer implements PEER {
     [consumerID: string]: Consumer;
   };
   readonly producers: {
-    [producerID: string]: Producer;
+    [producerId: string]: Producer;
   };
   constructor(socketID: string, name: string) {
     (this.id = socketID),
@@ -52,13 +52,13 @@ class Peer implements PEER {
     return producer;
   }
 
-  async createConsumer(consumerTransportID: string, producerID: string, rtpCapabilities: RtpCapabilities) {
+  async createConsumer(consumerTransportID: string, producerId: string, rtpCapabilities: RtpCapabilities) {
     const consumerTransport = this.transports[consumerTransportID];
     let consumer: Consumer | null = null;
 
     try {
       consumer = await consumerTransport.consume({
-        producerId: producerID,
+        producerId: producerId,
         rtpCapabilities,
         paused: false,
       });
@@ -83,7 +83,7 @@ class Peer implements PEER {
     return {
       consumer,
       params: {
-        producerId: producerID,
+        producerId: producerId,
         id: consumer.id,
         kind: consumer.kind,
         rtpParameters: consumer.rtpParameters,
@@ -103,13 +103,13 @@ class Peer implements PEER {
     }
   }
 
-  closeProducer(producerID: string) {
+  closeProducer(producerId: string) {
     try {
-      this.producers[producerID].close();
+      this.producers[producerId].close();
     } catch (err) {
       console.warn(err);
     }
-    delete this.producers[producerID];
+    delete this.producers[producerId];
   }
 }
 
