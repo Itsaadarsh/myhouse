@@ -1,6 +1,14 @@
-import { DtlsParameters, Router, Worker } from 'mediasoup/lib/types';
+import {
+  DtlsParameters,
+  MediaKind,
+  Router,
+  RtpCapabilities,
+  RtpParameters,
+  Worker,
+} from 'mediasoup/lib/types';
 import config from './config';
 import { PEERTYPE, ROOM } from './types/allRooms.types.';
+import customLogs from './utils/customConsoleLogs';
 
 class Room implements ROOM {
   readonly id: string;
@@ -68,16 +76,16 @@ class Room implements ROOM {
 
     transport.on('dtlsstatechange', dtlsState => {
       if (dtlsState === 'closed') {
-        console.log(`------TRANSPORT CLOSED------- ${this.peers[socketID].name} CLOSED`);
+        customLogs(`------TRANSPORT CLOSED------- || ${this.peers[socketID].name} CLOSED`);
         transport.close();
       }
     });
 
     transport.on('close', () => {
-      console.log(`------TRANSPORT CLOSED------- ${this.peers[socketID].name} CLOSED`);
+      customLogs(`------TRANSPORT CLOSED------- || ${this.peers[socketID].name} CLOSED`);
     });
 
-    console.log(`----ADDING TRANSPORT----- ${transport.id}`);
+    customLogs(`----ADDING TRANSPORT----- || ${transport.id}`);
     this.peers[socketID].addTransport(transport);
     return {
       params: {
@@ -92,6 +100,54 @@ class Room implements ROOM {
   async connectPeerTransport(socketID: string, transportID: string, dtlsParameters: DtlsParameters) {
     if (!this.peers[socketID]) return;
     await this.peers[socketID].connectTransport(transportID, dtlsParameters);
+  }
+
+  async produce(socketID: string, produceTransportID: string, rtpParameters: RtpParameters, kind: MediaKind) {
+    return new Promise(async (resolve, _) => {
+      const producer = await this.peers[socketID].createProducer(produceTransportID, rtpParameters, kind);
+      resolve(producer.id);
+      this.brodCast(socketID, 'newProducers', [
+        {
+          producerID: producer.id,
+          producerSocketID: socketID,
+        },
+      ]);
+    });
+  }
+
+  brodCast(
+    sockerID: string,
+    eventName: string,
+    data: Array<{ producerID: string; producerSocketID: string }>
+  ) {
+    for (let otherID of Array.from(Object.keys(this.peers)).filter(id => id !== sockerID)) {
+      this.io.to(otherID).emit(eventName, data);
+    }
+  }
+
+  async consume(
+    socketID: string,
+    consumerTransportID: string,
+    producerID: string,
+    rtpCapabilities: RtpCapabilities
+  ) {
+    if (!this.router.canConsume({ producerId: producerID, rtpCapabilities })) {
+      console.error('Can not CONSUME');
+      return;
+    }
+
+    const response = await this.peers[socketID].createConsumer(
+      consumerTransportID,
+      producerID,
+      rtpCapabilities
+    );
+    response?.consumer.on('producerclose', () => {
+      customLogs(`CONSUMER CLOSED (Due to produerclose event) || CONSUMER ID ${response?.consumer.id}`);
+      this.peers[socketID].removeConsumer(response?.consumer.id);
+      this.io.to(socketID).emit('consumerClosed', { consumerID: response?.consumer.id });
+    });
+
+    return response?.params;
   }
 }
 

@@ -8,7 +8,7 @@ import Peer from './Peer';
 import mySocket from './utils/customSocket';
 import customLogs from './utils/customConsoleLogs';
 import { Server } from 'socket.io';
-import { DtlsParameters, Worker } from 'mediasoup/lib/types';
+import { DtlsParameters, MediaKind, RtpCapabilities, RtpParameters, Worker } from 'mediasoup/lib/types';
 import { createWorkers } from './utils/createWorker';
 const https = require('httpolyglot');
 
@@ -98,6 +98,51 @@ io.on('connection', (socket: mySocket) => {
       if (!roomList[socket.roomID]) return;
       await roomList[socket.roomID].connectPeerTransport(socket.id, transportID, dtlsParameters);
       callback('Success');
+    }
+  );
+
+  socket.on(
+    'produce',
+    async (
+      {
+        kind,
+        rtpParameters,
+        produceTransportID,
+      }: { kind: MediaKind; rtpParameters: RtpParameters; produceTransportID: string },
+      callback
+    ) => {
+      if (!roomList[socket.roomID]) {
+        return callback({ error: 'No ROOM found' });
+      }
+      const producerID = await roomList[socket.roomID].produce(
+        socket.id,
+        produceTransportID,
+        rtpParameters,
+        kind
+      );
+      customLogs(`PRODUCING || TYPE : ${kind}`, roomList, socket);
+      callback({ producerID });
+    }
+  );
+
+  socket.on(
+    'consume',
+    async (
+      {
+        consumerTransportID,
+        producerID,
+        rtpCapabilities,
+      }: { consumerTransportID: string; producerID: string; rtpCapabilities: RtpCapabilities },
+      callback
+    ) => {
+      const params = await roomList[socket.roomID].consume(
+        socket.id,
+        consumerTransportID,
+        producerID,
+        rtpCapabilities
+      );
+      customLogs(`CONSUMING || CONSUMER ID : ${params.id} || PRODUCER ID : ${producerID}`, roomList, socket);
+      callback(params);
     }
   );
 });
