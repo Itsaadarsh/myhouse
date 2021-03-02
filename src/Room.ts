@@ -149,6 +149,22 @@ class Room implements ROOM {
 
     return response?.params;
   }
+
+  async removePeer(socketID: string) {
+    this.peers[socketID].close();
+    delete this.peers[socketID];
+  }
+
+  async closeProducer(socketID: string, producerID: string) {
+    this.peers[socketID].closeProducer(producerID);
+  }
+
+  toJson() {
+    return {
+      id: this.id,
+      peers: JSON.stringify([this.peers]),
+    };
+  }
 }
 
 export default Room;

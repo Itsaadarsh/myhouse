@@ -96,6 +96,21 @@ class Peer implements PEER {
   removeConsumer(consumerID: string) {
     delete this.consumers[consumerID];
   }
+
+  close() {
+    for (let transport in this.transports) {
+      this.transports[transport].close();
+    }
+  }
+
+  closeProducer(producerID: string) {
+    try {
+      this.producers[producerID].close();
+    } catch (err) {
+      console.warn(err);
+    }
+    delete this.producers[producerID];
+  }
 }
 
 export default Peer;

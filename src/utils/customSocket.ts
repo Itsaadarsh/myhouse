@@ -1,7 +1,7 @@
 import { Socket } from 'socket.io';
 
 class mySocket extends Socket {
-  roomID: string;
+  roomID: string | null;
 }
 
 export default mySocket;

@@ -52,22 +52,22 @@ io.on('connection', (socket: mySocket) => {
       });
     }
     roomList[roomID].addPeer(new Peer(socket.id, name));
-    socket.roomID = roomID;
-    callback(roomList[roomID]);
+    socket.roomID! = roomID;
+    callback(roomList[roomID].toJson());
   });
 
   socket.on('getProducers', () => {
     customLogs('GET PRODUCER', roomList, socket);
     // Sends all the current producers in the room to the newly joined user
-    if (!roomList[socket.roomID]) return;
-    const getProducerList = roomList[socket.roomID].getProducerList();
+    if (!roomList[socket.roomID!]) return;
+    const getProducerList = roomList[socket.roomID!].getProducerList();
     socket.emit('newProducers', getProducerList);
   });
 
   socket.on('getRouterRTPCapabilities', (_, callback) => {
     customLogs('GET ROUTER RTP CAPABILITIES', roomList, socket);
     try {
-      callback(roomList[socket.roomID].getRTPCapabilities());
+      callback(roomList[socket.roomID!].getRTPCapabilities());
     } catch (err) {
       callback({
         error: err.message,
@@ -78,7 +78,7 @@ io.on('connection', (socket: mySocket) => {
   socket.on('createwebRTCTransport', async (_, callback) => {
     customLogs('CREATE WEBRTC TRANSPORTs', roomList, socket);
     try {
-      const { params } = await roomList[socket.roomID].createWebRTCTransport(socket.id);
+      const { params } = await roomList[socket.roomID!].createWebRTCTransport(socket.id);
       callback(params);
     } catch (err) {
       console.error(err);
@@ -95,8 +95,8 @@ io.on('connection', (socket: mySocket) => {
       callback
     ) => {
       customLogs('CONNECT TRANSPORT', roomList, socket);
-      if (!roomList[socket.roomID]) return;
-      await roomList[socket.roomID].connectPeerTransport(socket.id, transportID, dtlsParameters);
+      if (!roomList[socket.roomID!]) return;
+      await roomList[socket.roomID!].connectPeerTransport(socket.id, transportID, dtlsParameters);
       callback('Success');
     }
   );
@@ -111,10 +111,10 @@ io.on('connection', (socket: mySocket) => {
       }: { kind: MediaKind; rtpParameters: RtpParameters; produceTransportID: string },
       callback
     ) => {
-      if (!roomList[socket.roomID]) {
+      if (!roomList[socket.roomID!]) {
         return callback({ error: 'No ROOM found' });
       }
-      const producerID = await roomList[socket.roomID].produce(
+      const producerID = await roomList[socket.roomID!].produce(
         socket.id,
         produceTransportID,
         rtpParameters,
@@ -135,16 +135,47 @@ io.on('connection', (socket: mySocket) => {
       }: { consumerTransportID: string; producerID: string; rtpCapabilities: RtpCapabilities },
       callback
     ) => {
-      const params = await roomList[socket.roomID].consume(
+      const params = await roomList[socket.roomID!].consume(
         socket.id,
         consumerTransportID,
         producerID,
         rtpCapabilities
       );
-      customLogs(`CONSUMING || CONSUMER ID : ${params.id} || PRODUCER ID : ${producerID}`, roomList, socket);
+      customLogs(`CONSUMING || CONSUMER ID : ${params?.id} || PRODUCER ID : ${producerID}`, roomList, socket);
       callback(params);
     }
   );
+
+  socket.on('getMyRoomInfo', async (_, callback) => {
+    callback(roomList[socket.roomID!].toJson());
+  });
+
+  socket.on('disconnect', () => {
+    customLogs(`DISCONNECTED`, roomList, socket);
+    if (!socket.roomID!) return;
+    roomList[socket.roomID!].removePeer(socket.id);
+  });
+
+  socket.on('producerClosed', ({ producerID }: { producerID: string }) => {
+    customLogs(`PRODUCER CLOSED`, roomList, socket);
+    roomList[socket.roomID!].closeProducer(socket.id, producerID);
+  });
+
+  socket.on('exitRoom', async (_, callback) => {
+    customLogs(`EXIT ROOM`, roomList, socket);
+    if (!roomList[socket.roomID!]) {
+      callback({
+        error: 'Room not available',
+      });
+      return;
+    }
+    await roomList[socket.roomID!].removePeer(socket.id);
+    if (Object.keys(roomList[socket.roomID!].getPeers()).length === 0) {
+      delete roomList[socket.roomID!];
+    }
+    socket.roomID = null;
+    callback('ROOM EXITED');
+  });
 });
 
 const getMSWorker = () => {
