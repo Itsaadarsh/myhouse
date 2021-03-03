@@ -55,18 +55,10 @@
         audio: <select id="audioSelect">
         </select>
         <br/>
-        video: <select id="videoSelect">
-        </select>
         <br />
         <button id='startAudioButton' class='hidden' onclick="rc.produce(RoomClient.mediaType.audio, audioSelect.value)">audio</button>
         <button id='stopAudioButton' class='hidden' onclick="rc.closeProducer(RoomClient.mediaType.audio)">close
             audio</button>
-        <button id='startVideoButton' class='hidden' onclick="rc.produce(RoomClient.mediaType.video, videoSelect.value)">video</button>
-        <button id='stopVideoButton' class='hidden' onclick="rc.closeProducer(RoomClient.mediaType.video)">close
-            video</button>
-        <button id='startScreenButton' class='hidden' onclick="rc.produce(RoomClient.mediaType.screen)">screen</button>
-        <button id='stopScreenButton' class='hidden' onclick="rc.closeProducer(RoomClient.mediaType.screen)">close
-            screen</button>
         <br />
     </div>
 
@@ -76,8 +68,6 @@
     <div id='videoMedia' class='hidden'>
         <h2>------local------</h2>
         <div id="localMedia"></div>
-        <!--<video id="localVideo" autoplay inline class="vid"></video>-->
-        <!--<video id="localScreen" autoplay inline class="vid"></video>-->
         <h2>-----remote-----</h2>
         <div id="remoteVideos" class="container">
         </div>
