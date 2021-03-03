@@ -11,4 +11,5 @@ export default interface CONFIGTYPES {
     router: RouterOptions;
     webRTCTransport: WebRtcTransportOptions;
   };
+  maxIncomingBitrate: number;
 }

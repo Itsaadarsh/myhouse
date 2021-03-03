@@ -44,7 +44,7 @@ class Room implements ROOM {
     let producer: any;
     for (let peer in this.peers) {
       for (producer in this.peers[peer].producers) {
-        producerList.push({ producerId: producer.id });
+        producerList.push({ producerId: producer });
       }
     }
     return producerList;
@@ -56,8 +56,7 @@ class Room implements ROOM {
 
   async createWebRTCTransport(socketID: string) {
     const { initialAvailableOutgoingBitrate } = config.mediasoup.webRTCTransport;
-    const maxIncomingBitrate = 1500000;
-
+    const maxIncomingBitrate = config.maxIncomingBitrate;
     const transport = await this.router.createWebRtcTransport({
       listenIps: config.mediasoup.webRTCTransport.listenIps,
       enableUdp: true,

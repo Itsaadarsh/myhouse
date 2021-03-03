@@ -415,15 +415,16 @@ class RoomClient {
     this.getConsumeStream(producerId).then(
       function ({ consumer, stream, kind }) {
         this.consumers.set(consumer.id, consumer);
-
         let elem;
         if (kind === 'video') {
+          console.log(stream);
           elem = document.createElement('video');
           elem.srcObject = stream;
           elem.id = consumer.id;
           elem.playsinline = false;
           elem.autoplay = true;
           elem.className = 'vid';
+          console.log(elem);
           this.remoteVideoEl.appendChild(elem);
         } else {
           elem = document.createElement('audio');
@@ -433,7 +434,6 @@ class RoomClient {
           elem.autoplay = true;
           this.remoteAudioEl.appendChild(elem);
         }
-
         consumer.on(
           'trackended',
           function () {
@@ -469,6 +469,7 @@ class RoomClient {
     });
     const stream = new MediaStream();
     stream.addTrack(consumer.track);
+
     return {
       consumer,
       stream,

@@ -8,16 +8,27 @@ const config: CONFIGTYPES = {
   sslKey: '../ssl/key.pem',
 
   mediasoup: {
-    // Worker Settings
+    // Worker settings
     numWorkers: Object.keys(os.cpus()).length,
     worker: {
       rtcMinPort: 10000,
       rtcMaxPort: 10100,
       logLevel: 'warn',
-      logTags: ['info', 'ice', 'dtls', 'rtp', 'srtp', 'rtcp'],
+      logTags: [
+        'info',
+        'ice',
+        'dtls',
+        'rtp',
+        'srtp',
+        'rtcp',
+        // 'rtx',
+        // 'bwe',
+        // 'score',
+        // 'simulcast',
+        // 'svc'
+      ],
     },
-
-    // Router Settings
+    // Router settings
     router: {
       mediaCodecs: [
         {
@@ -36,18 +47,18 @@ const config: CONFIGTYPES = {
         },
       ],
     },
-
-    // WebRTC Transport Settings
+    // WebRtcTransport settings
     webRTCTransport: {
       listenIps: [
         {
           ip: '0.0.0.0',
-          announcedIp: '127.0.0.1',
+          announcedIp: '127.0.0.1', // replace by public IP address
         },
       ],
       initialAvailableOutgoingBitrate: 1000000,
     },
   },
+  maxIncomingBitrate: 1500000,
 };
 
 export default module.exports = config;

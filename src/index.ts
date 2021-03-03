@@ -63,8 +63,6 @@ io.on('connection', (socket: mySocket) => {
     // Sends all the current producers in the room to the newly joined user
     if (!roomList[socket.roomID!]) return;
     const getProducerList = roomList[socket.roomID!].getProducerList();
-    console.log('222222222222222222222222222222222222222222222222222222');
-    console.log(getProducerList);
     socket.emit('newProducers', getProducerList);
   });
 
@@ -139,8 +137,6 @@ io.on('connection', (socket: mySocket) => {
       }: { consumerTransportID: string; producerId: string; rtpCapabilities: RtpCapabilities },
       callback
     ) => {
-      console.log('1111111111111111111111111111111111111111');
-      console.log(producerId);
       const params = await roomList[socket.roomID!].consume(
         socket.id,
         consumerTransportID,
