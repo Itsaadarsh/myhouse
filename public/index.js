@@ -23,7 +23,7 @@ socket.request = function request(type, data = {}) {
 
 let rc = null;
 
-function joinRoom(name, room_id) {
+function joinRoom(name, roomID) {
   if (rc && rc.isOpen()) {
     console.log('already connected to a room');
   } else {
@@ -33,7 +33,7 @@ function joinRoom(name, room_id) {
       remoteAudios,
       window.mediasoupClient,
       socket,
-      room_id,
+      roomID,
       name,
       roomOpen
     );

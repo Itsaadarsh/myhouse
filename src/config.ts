@@ -14,19 +14,7 @@ const config: CONFIGTYPES = {
       rtcMinPort: 10000,
       rtcMaxPort: 10100,
       logLevel: 'warn',
-      logTags: [
-        'info',
-        'ice',
-        'dtls',
-        'rtp',
-        'srtp',
-        'rtcp',
-        // 'rtx',
-        // 'bwe',
-        // 'score',
-        // 'simulcast',
-        // 'svc'
-      ],
+      logTags: ['info', 'ice', 'dtls', 'rtp', 'srtp', 'rtcp'],
     },
     // Router settings
     router: {
@@ -47,12 +35,12 @@ const config: CONFIGTYPES = {
         },
       ],
     },
-    // WebRtcTransport settings
+    // WebRtcTransport
     webRTCTransport: {
       listenIps: [
         {
           ip: '0.0.0.0',
-          announcedIp: '127.0.0.1', // replace by public IP address
+          announcedIp: '127.0.0.1',
         },
       ],
       initialAvailableOutgoingBitrate: 1000000,

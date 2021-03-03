@@ -131,7 +131,7 @@ class RoomClient {
           this.socket
             .request('connectTransport', {
               dtlsParameters,
-              transport_id: data.id,
+              transportID: data.id,
             })
             .then(callback)
             .catch(errback);
@@ -195,7 +195,7 @@ class RoomClient {
         function ({ dtlsParameters }, callback, errback) {
           this.socket
             .request('connectTransport', {
-              transport_id: this.consumerTransport.id,
+              transportID: this.consumerTransport.id,
               dtlsParameters,
             })
             .then(callback)
@@ -417,7 +417,6 @@ class RoomClient {
         this.consumers.set(consumer.id, consumer);
         let elem;
         if (kind === 'video') {
-          console.log(stream);
           elem = document.createElement('video');
           elem.srcObject = stream;
           elem.id = consumer.id;
