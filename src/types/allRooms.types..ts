@@ -19,6 +19,8 @@ export type PEERTYPE = {
 export interface PEER {
   id: string;
   name: string;
+  isSpeaker: boolean;
+  isListener: boolean;
   transports: {
     [transportID: string]: Transport;
   };

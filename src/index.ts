@@ -51,7 +51,11 @@ io.on('connection', (socket: mySocket) => {
         error: 'Room does not exist!',
       });
     }
-    roomList[roomID].addPeer(new Peer(socket.id, name));
+    if (Object.keys(roomList).length === 0) {
+      roomList[roomID].addPeer(new Peer(socket.id, name, true));
+    } else {
+      roomList[roomID].addPeer(new Peer(socket.id, name, false));
+    }
     socket.roomID! = roomID;
     callback(roomList[roomID].toJson());
   });

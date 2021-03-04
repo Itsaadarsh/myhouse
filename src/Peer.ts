@@ -13,6 +13,8 @@ import customLogs from './utils/customConsoleLogs';
 class Peer implements PEER {
   readonly id: string;
   readonly name: string;
+  readonly isSpeaker: boolean;
+  readonly isListener: boolean;
   readonly transports: {
     [transportID: string]: Transport;
   };
@@ -22,12 +24,19 @@ class Peer implements PEER {
   readonly producers: {
     [producerId: string]: Producer;
   };
-  constructor(socketID: string, name: string) {
+  constructor(socketID: string, name: string, creatorBool: boolean) {
     (this.id = socketID),
       (this.name = name),
       (this.transports = {}),
       (this.consumers = {}),
       (this.producers = {});
+    if (creatorBool) {
+      this.isSpeaker = true;
+      this.isListener = false;
+    } else {
+      this.isListener = true;
+      this.isSpeaker = false;
+    }
   }
 
   addTransport(transport: Transport) {

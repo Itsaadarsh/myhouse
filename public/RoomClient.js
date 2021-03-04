@@ -50,6 +50,7 @@ class RoomClient {
   ////////// INIT /////////
 
   async createRoom(roomID) {
+    console.log('1');
     await this.socket
       .request('createRoom', {
         roomID,
