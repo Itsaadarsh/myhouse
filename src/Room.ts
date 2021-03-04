@@ -158,6 +158,23 @@ class Room implements ROOM {
     this.peers[socketID].closeProducer(producerId);
   }
 
+  getPeerInfo() {
+    const peerList: Array<{ id: string; name: string; isListener: boolean; isSpeaker: boolean }> | any = [];
+    for (let peerKey in this.peers) {
+      peerList.push({
+        id: this.peers[peerKey].id,
+        name: this.peers[peerKey].name,
+        isSpeaker: this.peers[peerKey].isSpeaker,
+        isListener: this.peers[peerKey].isListener,
+      });
+    }
+
+    return {
+      roomID: this.id,
+      peers: peerList,
+    };
+  }
+
   toJson() {
     return {
       id: this.id,

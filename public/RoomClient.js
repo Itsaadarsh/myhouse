@@ -3,7 +3,6 @@ const mediaType = {
 };
 const _EVENTS = {
   exitRoom: 'exitRoom',
-  openRoom: 'openRoom',
   startAudio: 'startAudio',
   stopAudio: 'stopAudio',
 };
@@ -50,7 +49,6 @@ class RoomClient {
   ////////// INIT /////////
 
   async createRoom(roomID) {
-    console.log('1');
     await this.socket
       .request('createRoom', {
         roomID,
@@ -73,6 +71,10 @@ class RoomClient {
           this.device = device;
           await this.initTransports(device);
           this.socket.emit('getProducers');
+          const info = await this.roomInfo();
+          if (info.peers[info.peers.length - 1].isListener) {
+            this.event(_EVENTS.stopAudio);
+          }
         }.bind(this)
       )
       .catch(e => {
@@ -317,7 +319,6 @@ class RoomClient {
   }
 
   async consume(producerId) {
-    //let info = await roomInfo()
     this.getConsumeStream(producerId).then(
       function ({ consumer, stream, kind }) {
         this.consumers.set(consumer.id, consumer);
@@ -377,7 +378,6 @@ class RoomClient {
       return;
     }
     let producerId = this.producerLabel.get(type);
-    console.log(producerId);
     this.socket.emit('producerClosed', {
       producerId,
     });
@@ -450,7 +450,7 @@ class RoomClient {
   ///////  HELPERS //////////
 
   async roomInfo() {
-    let info = await socket.request('getMyRoomInfo');
+    let info = await socket.request('getMyPeerInfo');
     return info;
   }
 

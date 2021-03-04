@@ -51,13 +51,13 @@ io.on('connection', (socket: mySocket) => {
         error: 'Room does not exist!',
       });
     }
-    if (Object.keys(roomList).length === 0) {
+    if (Object.keys(roomList[roomID].peers).length === 0) {
       roomList[roomID].addPeer(new Peer(socket.id, name, true));
     } else {
       roomList[roomID].addPeer(new Peer(socket.id, name, false));
     }
     socket.roomID! = roomID;
-    callback(roomList[roomID].toJson());
+    callback({});
   });
 
   socket.on('getProducers', () => {
@@ -150,8 +150,8 @@ io.on('connection', (socket: mySocket) => {
     }
   );
 
-  socket.on('getMyRoomInfo', async (_, callback) => {
-    callback(roomList[socket.roomID!].toJson());
+  socket.on('getMyPeerInfo', async (_, callback) => {
+    callback(roomList[socket.roomID!].getPeerInfo());
   });
 
   socket.on('disconnect', () => {

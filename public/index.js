@@ -50,6 +50,8 @@ function reveal(elem) {
 
 function addListeners() {
   rc.on(RoomClient.EVENTS.stopAudio, () => {
+    stopAudioButton.disabled = true;
+    startAudioButton.disabled = true;
     hide(stopAudioButton);
     reveal(startAudioButton);
   });
