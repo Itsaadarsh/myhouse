@@ -13,8 +13,8 @@ import customLogs from './utils/customConsoleLogs';
 class Peer implements PEER {
   readonly id: string;
   readonly name: string;
-  readonly isSpeaker: boolean;
-  readonly isListener: boolean;
+  isSpeaker: boolean;
+  isListener: boolean;
   readonly transports: {
     [transportID: string]: Transport;
   };
@@ -119,6 +119,10 @@ class Peer implements PEER {
       console.warn(err);
     }
     delete this.producers[producerId];
+  }
+
+  speakerPermission() {
+    (this.isListener = false), (this.isSpeaker = true);
   }
 }
 

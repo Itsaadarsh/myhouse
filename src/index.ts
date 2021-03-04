@@ -180,6 +180,14 @@ io.on('connection', (socket: mySocket) => {
     socket.roomID = null;
     callback('ROOM EXITED');
   });
+
+  socket.on('beASpeaker', async (_, callback) => {
+    if (!roomList[socket.roomID!]) {
+      return callback({ error: 'No ROOM found' });
+    }
+    await roomList[socket.roomID!].becomeASpeaker(socket.id);
+    callback({});
+  });
 });
 
 const getMSWorker = () => {

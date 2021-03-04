@@ -72,6 +72,7 @@ class RoomClient {
           await this.initTransports(device);
           this.socket.emit('getProducers');
           const info = await this.roomInfo();
+          console.log(info);
           if (info.peers[info.peers.length - 1].isListener) {
             this.event(_EVENTS.stopAudio);
           }
@@ -370,6 +371,13 @@ class RoomClient {
       stream,
       kind,
     };
+  }
+
+  async beASpeaker() {
+    await this.socket.request('beASpeaker');
+    console.log('in im');
+    const info = await this.roomInfo();
+    console.log(info);
   }
 
   closeProducer(type) {

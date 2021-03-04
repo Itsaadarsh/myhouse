@@ -52,6 +52,7 @@ function addListeners() {
   rc.on(RoomClient.EVENTS.stopAudio, () => {
     stopAudioButton.disabled = true;
     startAudioButton.disabled = true;
+    beASpeaker.className = '';
     hide(stopAudioButton);
     reveal(startAudioButton);
   });

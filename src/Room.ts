@@ -175,6 +175,11 @@ class Room implements ROOM {
     };
   }
 
+  async becomeASpeaker(sockerID: string) {
+    if (!this.peers[sockerID]) return;
+    await this.peers[sockerID].speakerPermission();
+  }
+
   toJson() {
     return {
       id: this.id,
