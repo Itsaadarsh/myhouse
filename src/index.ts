@@ -24,7 +24,17 @@ httpsServer.listen(config.listenPort, () =>
   console.log(`Server started at http://localhost:${config.listenPort}/`)
 );
 
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method == 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'PUT,POST,DELETE,PATCH');
+    return res.status(200).json({});
+  }
+  next();
+  return;
+});
 
 let workers: Array<Worker> = [];
 let nextWorkerIndex: number = 0;
@@ -35,6 +45,9 @@ let roomList: ALLROOMS = {};
 })();
 
 io.on('connection', (socket: mySocket) => {
+  socket.on('welcome', () => {
+    io.emit('welcome', { msg: 'welcome to myhouse' });
+  });
   socket.on('createRoom', async ({ roomID }: { roomID: string }, callback) => {
     if (roomList[roomID]) {
       callback('Already exists');
