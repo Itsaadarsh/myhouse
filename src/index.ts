@@ -203,9 +203,21 @@ io.on('connection', (socket: mySocket) => {
     callback({});
   });
 
-  socket.on('speakerPermissionAccepted', async ({ socketID }: { socketID: string }, callback) => {
+  socket.on('speakerPermissionAccepted', async ({ socketID }: { socketID: string }, _) => {
     await roomList[socket.roomID!].becomeASpeaker(socketID);
-    callback({});
+    const getPeer = roomList[socket.roomID!].getPeer(socketID);
+
+    if (getPeer !== null) {
+      io.to(socketID).emit('speakerAccepted', {
+        peerData: {
+          id: getPeer.id,
+          name: getPeer.name,
+          isAdmin: getPeer.isAdmin,
+          isListener: getPeer.isListener,
+          isSpeaker: getPeer.isSpeaker,
+        },
+      });
+    }
   });
 });
 

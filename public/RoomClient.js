@@ -5,6 +5,9 @@ const _EVENTS = {
   exitRoom: 'exitRoom',
   startAudio: 'startAudio',
   stopAudio: 'stopAudio',
+  defaultListener: 'defaultListener',
+  defaultSpeaker: 'defaultSpeaker',
+  disableSpeaker: 'disableSpeaker',
 };
 
 class RoomClient {
@@ -74,7 +77,7 @@ class RoomClient {
           const info = await this.roomInfo();
           console.log(info);
           if (info.peers[info.peers.length - 1].isListener) {
-            this.event(_EVENTS.stopAudio);
+            this.event(_EVENTS.defaultListener);
           } else {
             await this.listenToSpeakerPermission();
           }
@@ -381,15 +384,20 @@ class RoomClient {
         this.socket.emit('speakerPermissionAccepted', {
           socketID: peerData.id,
         });
-        console.log(`${peerData.name} is a speaker now!`);
-        const info = await this.roomInfo();
-        console.log(info);
       }
     });
   }
 
   async beASpeaker() {
     await this.socket.request('beASpeaker');
+    this.socket.on('speakerAccepted', async ({ peerData }) => {
+      if (peerData) {
+        this.event(_EVENTS.defaultSpeaker);
+      } else {
+        this.event(_EVENTS.defaultListener);
+      }
+    });
+    this.event(_EVENTS.disableSpeaker);
   }
 
   closeProducer(type) {

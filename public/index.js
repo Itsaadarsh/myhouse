@@ -50,12 +50,10 @@ function reveal(elem) {
 
 function addListeners() {
   rc.on(RoomClient.EVENTS.stopAudio, () => {
-    stopAudioButton.disabled = true;
-    startAudioButton.disabled = true;
-    beASpeaker.className = '';
     hide(stopAudioButton);
     reveal(startAudioButton);
   });
+
   rc.on(RoomClient.EVENTS.startAudio, () => {
     hide(startAudioButton);
     reveal(stopAudioButton);
@@ -64,6 +62,21 @@ function addListeners() {
   rc.on(RoomClient.EVENTS.exitRoom, () => {
     hide(control);
     reveal(login);
+  });
+
+  rc.on(RoomClient.EVENTS.defaultListener, () => {
+    stopAudioButton.disabled = true;
+    startAudioButton.disabled = true;
+    beASpeaker.className = '';
+  });
+
+  rc.on(RoomClient.EVENTS.defaultSpeaker, () => {
+    stopAudioButton.disabled = false;
+    startAudioButton.disabled = false;
+    beASpeaker.className = 'hidden';
+  });
+  rc.on(RoomClient.EVENTS.disableSpeaker, () => {
+    beASpeaker.disabled = true;
   });
 }
 
