@@ -76,7 +76,6 @@ class RoomClient {
           if (info.peers[info.peers.length - 1].isListener) {
             this.event(_EVENTS.stopAudio);
           } else {
-            console.log('im in');
             await this.listenToSpeakerPermission();
           }
         }.bind(this)
@@ -377,17 +376,20 @@ class RoomClient {
   }
 
   async listenToSpeakerPermission() {
-    await this.socket.on('speakerPermission', function ({ peerData }) {
+    await this.socket.on('speakerPermission', async ({ peerData }) => {
       if (confirm(`${peerData.name} wants to be a speaker`)) {
-        console.log(`${peerData.name} is a speaker now`);
+        this.socket.emit('speakerPermissionAccepted', {
+          socketID: peerData.id,
+        });
+        console.log(`${peerData.name} is a speaker now!`);
+        const info = await this.roomInfo();
+        console.log(info);
       }
     });
   }
 
   async beASpeaker() {
     await this.socket.request('beASpeaker');
-    const info = await this.roomInfo();
-    console.log(info);
   }
 
   closeProducer(type) {

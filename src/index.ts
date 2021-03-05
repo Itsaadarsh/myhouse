@@ -200,7 +200,11 @@ io.on('connection', (socket: mySocket) => {
       });
     }
 
-    await roomList[socket.roomID!].becomeASpeaker(socket.id);
+    callback({});
+  });
+
+  socket.on('speakerPermissionAccepted', async ({ socketID }: { socketID: string }, callback) => {
+    await roomList[socket.roomID!].becomeASpeaker(socketID);
     callback({});
   });
 });
