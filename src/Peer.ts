@@ -15,6 +15,7 @@ class Peer implements PEER {
   readonly name: string;
   isSpeaker: boolean;
   isListener: boolean;
+  readonly isAdmin: boolean;
   readonly transports: {
     [transportID: string]: Transport;
   };
@@ -31,9 +32,11 @@ class Peer implements PEER {
       (this.consumers = {}),
       (this.producers = {});
     if (creatorBool) {
+      this.isAdmin = true;
       this.isSpeaker = true;
       this.isListener = false;
     } else {
+      this.isAdmin = false;
       this.isListener = true;
       this.isSpeaker = false;
     }

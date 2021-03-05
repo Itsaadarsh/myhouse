@@ -20,7 +20,9 @@ const options = {
 
 const httpsServer = https.createServer(options, app);
 const io = new Server(httpsServer);
-httpsServer.listen(config.listenPort, () => console.log(`Server listening at PORT : ${config.listenPort}`));
+httpsServer.listen(config.listenPort, () =>
+  console.log(`Server started at http://localhost:${config.listenPort}/`)
+);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
@@ -151,7 +153,7 @@ io.on('connection', (socket: mySocket) => {
   );
 
   socket.on('getMyPeerInfo', async (_, callback) => {
-    callback(roomList[socket.roomID!].getPeerInfo());
+    callback(roomList[socket.roomID!].getAllPeerInfo());
   });
 
   socket.on('disconnect', () => {
@@ -185,6 +187,19 @@ io.on('connection', (socket: mySocket) => {
     if (!roomList[socket.roomID!]) {
       return callback({ error: 'No ROOM found' });
     }
+
+    const admin = roomList[socket.roomID!].getAdmin();
+    const getPeer = roomList[socket.roomID!].getPeer(socket.id);
+
+    if (admin !== null && getPeer !== null) {
+      io.to(admin.id).emit('speakerPermission', {
+        peerData: {
+          id: getPeer.id,
+          name: getPeer.name,
+        },
+      });
+    }
+
     await roomList[socket.roomID!].becomeASpeaker(socket.id);
     callback({});
   });

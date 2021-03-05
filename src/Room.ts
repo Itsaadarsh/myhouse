@@ -158,14 +158,17 @@ class Room implements ROOM {
     this.peers[socketID].closeProducer(producerId);
   }
 
-  getPeerInfo() {
-    const peerList: Array<{ id: string; name: string; isListener: boolean; isSpeaker: boolean }> | any = [];
+  getAllPeerInfo() {
+    const peerList:
+      | Array<{ id: string; name: string; isListener: boolean; isSpeaker: boolean; isAdmin: boolean }>
+      | any = [];
     for (let peerKey in this.peers) {
       peerList.push({
         id: this.peers[peerKey].id,
         name: this.peers[peerKey].name,
         isSpeaker: this.peers[peerKey].isSpeaker,
         isListener: this.peers[peerKey].isListener,
+        isAdmin: this.peers[peerKey].isAdmin,
       });
     }
 
@@ -178,6 +181,24 @@ class Room implements ROOM {
   async becomeASpeaker(sockerID: string) {
     if (!this.peers[sockerID]) return;
     await this.peers[sockerID].speakerPermission();
+  }
+
+  getAdmin() {
+    for (let peerKey in this.peers) {
+      if (this.peers[peerKey].isAdmin) {
+        return this.peers[peerKey];
+      }
+    }
+    return null;
+  }
+
+  getPeer(peerID: string) {
+    for (let peerKey in this.peers) {
+      if (this.peers[peerKey].id === peerID) {
+        return this.peers[peerKey];
+      }
+    }
+    return null;
   }
 
   toJson() {
