@@ -9,17 +9,17 @@ let producer = null;
 
 nameInput.value = 'bob' + Math.round(Math.random() * 1000);
 
-socket.request = function request(type, data = {}) {
-  return new Promise((resolve, reject) => {
-    socket.emit(type, data, data => {
-      if (data.error) {
-        reject(data.error);
-      } else {
-        resolve(data);
-      }
-    });
-  });
-};
+// socket.request = function request(type, data = {}) {
+//   return new Promise((resolve, reject) => {
+//     socket.emit(type, data, data => {
+//       if (data.error) {
+//         reject(data.error);
+//       } else {
+//         resolve(data);
+//       }
+//     });
+//   });
+// };
 
 let rc = null;
 

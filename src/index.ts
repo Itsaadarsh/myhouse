@@ -24,7 +24,7 @@ httpsServer.listen(config.listenPort, () =>
   console.log(`Server started at http://localhost:${config.listenPort}/`)
 );
 
-// app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -45,25 +45,33 @@ let roomList: ALLROOMS = {};
 })();
 
 io.on('connection', (socket: mySocket) => {
-  socket.on('welcome', () => {
-    io.emit('welcome', { msg: 'welcome to myhouse' });
-  });
-  socket.on('createRoom', async ({ roomID }: { roomID: string }, callback) => {
-    if (roomList[roomID]) {
-      callback('Already exists');
-    } else {
-      console.log('-------ROOM CREATED---------', roomID);
-      const worker = await getMSWorker();
-      roomList[roomID] = new Room(roomID, worker, io);
-      callback(roomID);
+  socket.on('createRoom', async ({ roomID }: { roomID: string }) => {
+    try {
+      if (roomList[roomID]) {
+        socket.emit('createRoom', { msg: 'Room already exists', data: null, status: 400 });
+      } else {
+        console.log('-------ROOM CREATED---------', roomID);
+        const worker = await getMSWorker();
+        roomList[roomID] = new Room(roomID, worker, io);
+        socket.emit('createRoom', { msg: 'Room Created', data: { roomID }, status: 200 });
+      }
+    } catch (err) {
+      console.log(err);
+      socket.emit('createRoom', {
+        msg: `Something went wrong at createRoom event`,
+        data: null,
+        status: 400,
+      });
     }
   });
 
-  socket.on('join', ({ roomID, name }: { roomID: string; name: string }, callback) => {
+  socket.on('join', ({ roomID, name }: { roomID: string; name: string }) => {
     console.log(`------USER JOINED------ \n ROOM ID : ${roomID} || USERNAME : ${name}`);
     if (!roomList[roomID]) {
-      return callback({
-        error: 'Room does not exist!',
+      return socket.emit('join', {
+        msg: 'Room does not exist!',
+        data: null,
+        status: 400,
       });
     }
     if (Object.keys(roomList[roomID].peers).length === 0) {
@@ -72,7 +80,11 @@ io.on('connection', (socket: mySocket) => {
       roomList[roomID].addPeer(new Peer(socket.id, name, false));
     }
     socket.roomID! = roomID;
-    callback({});
+    return socket.emit('join', {
+      msg: `User successfully joined room ${socket.roomID!}`,
+      data: { roomID },
+      status: 200,
+    });
   });
 
   socket.on('getProducers', () => {
@@ -83,15 +95,13 @@ io.on('connection', (socket: mySocket) => {
     socket.emit('newProducers', getProducerList);
   });
 
-  socket.on('getRouterRtpCapabilities', (_, callback) => {
+  socket.on('getRouterRtpCapabilities', () => {
     customLogs('GET ROUTER RTP CAPABILITIES', roomList, socket);
-    try {
-      callback(roomList[socket.roomID!].getRTPCapabilities());
-    } catch (err) {
-      callback({
-        error: err.message,
-      });
-    }
+    socket.emit('getRouterRtpCapabilities', {
+      msg: 'Router Capabilities',
+      data: roomList[socket.roomID!].getRTPCapabilities(),
+      status: 200,
+    });
   });
 
   socket.on('createWebRtcTransport', async (_, callback) => {
