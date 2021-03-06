@@ -3,6 +3,8 @@ import { Consumer } from 'mediasoup-client/lib/Consumer';
 import { Producer } from 'mediasoup-client/lib/Producer';
 import { Socket } from 'socket.io-client';
 import * as mediasoupClient from 'mediasoup-client';
+import { RtpCapabilities, RtpParameters } from 'mediasoup-client/lib/RtpParameters';
+import { DtlsParameters } from 'mediasoup-client/lib/Transport';
 
 const mediaType = {
   audio: 'audioType',
@@ -18,7 +20,7 @@ const _EVENTS = {
 
 interface RESPONSE {
   msg: string;
-  data: null | object;
+  data: null | any;
   status: number;
 }
 
@@ -27,8 +29,8 @@ class RoomClient {
   remoteAudioEl: HTMLAudioElement;
   socket: typeof Socket;
   roomID: string;
-  producerTransport: null | Producer;
-  consumerTransport: null | Consumer;
+  producerTransport: null | Producer | any;
+  consumerTransport: null | Consumer | any;
   device: null | Device;
   consumers: {
     [consumerID: string]: Consumer;
@@ -40,9 +42,7 @@ class RoomClient {
     [type: string]: string;
   };
   _isOpen: boolean;
-  eventListeners: {
-    [event: string]: [];
-  };
+  eventListeners: any;
   constructor(
     remoteAudioEl: HTMLAudioElement,
     socket: typeof Socket,
@@ -73,9 +73,10 @@ class RoomClient {
       this.eventListeners[evt] = [];
     });
 
-    this.createRoom(roomID).then(async () => {
-      await this.join(name, roomID);
-      this.initSockets();
+    this.createRoom(roomID).then(() => {
+      setTimeout(async () => {
+        this.join(name, roomID);
+      }, 100);
       this._isOpen = true;
       successCallback();
     });
@@ -95,35 +96,34 @@ class RoomClient {
 
   async join(name: string, roomID: string) {
     try {
-      await this.socket.emit(
-        'join',
-        {
-          name,
-          roomID,
-        },
-        async (response: RESPONSE) => {
-          console.log(response);
-          const data = await this.socket.emit('getRouterRtpCapabilities');
-          let device = await this.loadDevice(data);
-          this.device = device;
-          await this.initTransports(device);
-          this.socket.emit('getProducers');
-          const info = await this.roomInfo();
-          console.log(info);
-          if (info.peers[info.peers.length - 1].isListener) {
+      await this.socket.emit('join', { name, roomID });
+      await this.socket.emit('getRouterRtpCapabilities');
+      this.socket.on('getRouterRtpCapabilities', async (response: RESPONSE) => {
+        this.socket.emit('getMyPeerInfo');
+        console.log(response.data);
+        let device = await this.loadDevice(response.data);
+        this.device = device!;
+        this.initSockets();
+        this.initTransports(device!);
+        await this.socket.on('getMyPeerInfo', async ({ data }: RESPONSE) => {
+          console.log(data);
+          if (data.peers[data.peers.length - 1].isListener) {
             this.event(_EVENTS.defaultListener);
           } else {
             await this.listenToSpeakerPermission();
           }
-        }
-      );
+        });
+        setTimeout(() => {
+          this.socket.emit('getProducers');
+        }, 1000);
+      });
     } catch (err) {
       console.log(err);
     }
   }
 
-  async loadDevice(routerRtpCapabilities: any) {
-    let device: Device;
+  async loadDevice(routerRtpCapabilities: RtpCapabilities) {
+    let device;
     try {
       device = new mediasoupClient.Device();
     } catch (error) {
@@ -132,60 +132,68 @@ class RoomClient {
       }
       console.error(error);
     }
-    await device!.load({
+    await device?.load({
       routerRtpCapabilities,
     });
-    return device!;
+    return device;
   }
 
-  async initTransports(device: any) {
+  async initTransports(device: Device) {
     // init producerTransport
     {
-      const data = await this.socket.request('createWebRtcTransport', {
-        forceTcp: false,
-        rtpCapabilities: device.rtpCapabilities,
-      });
-      if (data.error) {
-        console.error(data.error);
-        return;
-      }
+      await this.socket.emit('createWebRtcProducerTransport');
+      await this.socket.on('createWebRtcProducerTransport', async (response: RESPONSE) => {
+        if (response.data === null) {
+          console.error(response.msg);
+          return;
+        }
 
-      this.producerTransport = device.createSendTransport(data);
-
-      this.producerTransport!.on(
-        'connect',
-        async function ({ dtlsParameters }, callback, errback) {
-          this.socket
-            .request('connectTransport', {
-              dtlsParameters,
-              transportID: data.id,
-            })
-            .then(callback)
-            .catch(errback);
-        }.bind(this)
-      );
-
-      this.producerTransport.on(
-        'produce',
-        async function ({ kind, rtpParameters }, callback, errback) {
-          try {
-            const { producerId } = await this.socket.request('produce', {
-              produceTransportID: this.producerTransport.id,
-              kind,
-              rtpParameters,
-            });
-            callback({
-              id: producerId,
-            });
-          } catch (err) {
-            errback(err);
+        this.producerTransport = device.createSendTransport(response.data);
+        this.producerTransport!.on(
+          'connect',
+          async ({ dtlsParameters }: { dtlsParameters: DtlsParameters }, callback: any, errback: any) => {
+            try {
+              await this.socket.emit('connectTransport', {
+                dtlsParameters,
+                transportID: response.data.id,
+              });
+              callback('Success');
+            } catch (err) {
+              errback(err);
+            }
           }
-        }.bind(this)
-      );
+        );
 
-      this.producerTransport.on(
-        'connectionstatechange',
-        function (state) {
+        this.producerTransport!.on(
+          'produce',
+          async (
+            { kind, rtpParameters }: { kind: string; rtpParameters: RtpParameters },
+            callback: any,
+            errback: any
+          ) => {
+            try {
+              await this.socket.emit('produce', {
+                produceTransportID: this.producerTransport!.id,
+                kind,
+                rtpParameters,
+              });
+
+              this.socket.on('produce', (response: RESPONSE) => {
+                const { producerId } = response.data;
+                if (response.data === null) return;
+                else {
+                  callback({
+                    id: producerId,
+                  });
+                }
+              });
+            } catch (err) {
+              errback(err);
+            }
+          }
+        );
+
+        this.producerTransport!.on('connectionstatechange', (state: any) => {
           switch (state) {
             case 'connecting':
               break;
@@ -194,44 +202,43 @@ class RoomClient {
               break;
 
             case 'failed':
-              this.producerTransport.close();
+              this.producerTransport!.close();
               break;
 
             default:
               break;
           }
-        }.bind(this)
-      );
+        });
+      });
     }
 
     // init consumerTransport
     {
-      const data = await this.socket.request('createWebRtcTransport', {
-        forceTcp: false,
-      });
-      if (data.error) {
-        console.error(data.error);
-        return;
-      }
+      await this.socket.emit('createWebRtcConsumerTransport');
+      this.socket.on('createWebRtcConsumerTransport', async (response: RESPONSE) => {
+        if (response.data === null) {
+          console.error(response.msg);
+          return;
+        }
+        // only one needed
+        this.consumerTransport = device.createRecvTransport(response.data);
+        console.log(this.consumerTransport!.id);
+        this.consumerTransport!.on(
+          'connect',
+          async ({ dtlsParameters }: { dtlsParameters: DtlsParameters }, callback: any, errback: any) => {
+            try {
+              await this.socket.emit('connectTransport', {
+                transportID: this.consumerTransport!.id,
+                dtlsParameters,
+              });
+              callback('Success');
+            } catch (err) {
+              errback(err);
+            }
+          }
+        );
 
-      // only one needed
-      this.consumerTransport = device.createRecvTransport(data);
-      this.consumerTransport.on(
-        'connect',
-        function ({ dtlsParameters }, callback, errback) {
-          this.socket
-            .request('connectTransport', {
-              transportID: this.consumerTransport.id,
-              dtlsParameters,
-            })
-            .then(callback)
-            .catch(errback);
-        }.bind(this)
-      );
-
-      this.consumerTransport.on(
-        'connectionstatechange',
-        async function (state) {
+        this.consumerTransport!.on('connectionstatechange', async (state: any) => {
           switch (state) {
             case 'connecting':
               break;
@@ -240,50 +247,40 @@ class RoomClient {
               break;
 
             case 'failed':
-              this.consumerTransport.close();
+              this.consumerTransport!.close();
               break;
 
             default:
               break;
           }
-        }.bind(this)
-      );
+        });
+      });
     }
   }
 
   initSockets() {
-    this.socket.on(
-      'consumerClosed',
-      function ({ consumerID }) {
-        console.log('closing consumer:', consumerID);
-        this.removeConsumer(consumerID);
-      }.bind(this)
-    );
+    this.socket.on('consumerClosed', ({ consumerID }: { consumerID: string }) => {
+      console.log('closing consumer:', consumerID);
+      this.removeConsumer(consumerID);
+    });
 
-    this.socket.on(
-      'newProducers',
-      async function (data) {
-        console.log('new producers', data);
-        for (let { producerId } of data) {
-          await this.consume(producerId);
-        }
-      }.bind(this)
-    );
+    this.socket.on('newProducers', async (data: Array<{ producerId: string }>) => {
+      console.log('new producers', data);
+      for (let { producerId } of data) {
+        await this.getConsumeStream(producerId);
+      }
+    });
 
-    this.socket.on(
-      'disconnect',
-      function () {
-        this.exit(true);
-      }.bind(this)
-    );
+    this.socket.on('disconnect', () => {
+      this.exit(true);
+    });
   }
 
   //////// MAIN FUNCTIONS /////////////
 
-  async produce(type, deviceId = null) {
+  async produce(type: string, deviceId = null) {
     let mediaConstraints = {};
     let audio = false;
-    let screen = false;
     switch (type) {
       case mediaType.audio:
         mediaConstraints = {
@@ -295,30 +292,28 @@ class RoomClient {
         audio = true;
         break;
     }
-    if (this.producerLabel.has(type)) {
+
+    if (this.producerLabel[type]) {
       console.log('producer already exists for this type ' + type);
       return;
     }
     console.log('mediacontraints:', mediaConstraints);
     let stream;
     try {
-      stream = screen
-        ? await navigator.mediaDevices.getDisplayMedia()
-        : await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
       console.log(navigator.mediaDevices.getSupportedConstraints());
 
-      const track = audio ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0];
+      const track = stream.getAudioTracks()[0];
       const params = {
         track,
       };
 
-      producer = await this.producerTransport.produce(params);
-
+      const producer = await this.producerTransport!.produce(params);
       console.log('producer', producer);
 
-      this.producers.set(producer.id, producer);
+      this.producers[producer.id] = producer;
 
-      let elem;
+      let elem: any;
 
       producer.on('trackended', () => {
         this.closeProducer(type);
@@ -327,26 +322,26 @@ class RoomClient {
       producer.on('transportclose', () => {
         console.log('producer transport close');
         if (!audio) {
-          elem.srcObject.getTracks().forEach(function (track) {
+          elem.srcObject.getTracks().forEach(function (track: any) {
             track.stop();
           });
           elem.parentNode.removeChild(elem);
         }
-        this.producers.delete(producer.id);
+        delete this.producers[producer.id];
       });
 
       producer.on('close', () => {
         console.log('closing producer');
         if (!audio) {
-          elem.srcObject.getTracks().forEach(function (track) {
+          elem.srcObject.getTracks().forEach(function (track: any) {
             track.stop();
           });
           elem.parentNode.removeChild(elem);
         }
-        this.producers.delete(producer.id);
+        delete this.producers[producer.id];
       });
 
-      this.producerLabel.set(type, producer.id);
+      this.producerLabel[type] = producer.id;
 
       switch (type) {
         case mediaType.audio:
@@ -358,94 +353,101 @@ class RoomClient {
     }
   }
 
-  async consume(producerId) {
-    this.getConsumeStream(producerId).then(
-      function ({ consumer, stream, kind }) {
-        this.consumers.set(consumer.id, consumer);
-        let elem;
-        elem = document.createElement('audio');
-        elem.srcObject = stream;
-        elem.id = consumer.id;
-        elem.playsinline = false;
-        elem.autoplay = true;
-        this.remoteAudioEl.appendChild(elem);
-        consumer.on(
-          'trackended',
-          function () {
-            this.removeConsumer(consumer.id);
-          }.bind(this)
-        );
-        consumer.on(
-          'transportclose',
-          function () {
-            this.removeConsumer(consumer.id);
-          }.bind(this)
-        );
-      }.bind(this)
-    );
+  async consume(consumer: Consumer, stream: any) {
+    this.consumers[consumer.id] = consumer;
+    let elem;
+    elem = document.createElement('audio');
+    elem.srcObject = stream;
+    elem.id = consumer.id;
+    elem.autoplay = true;
+    this.remoteAudioEl.appendChild(elem);
+    consumer.on('trackended', () => {
+      this.removeConsumer(consumer.id);
+    });
+    consumer.on('transportclose', () => {
+      this.removeConsumer(consumer.id);
+    });
   }
 
-  async getConsumeStream(producerId) {
-    const { rtpCapabilities } = this.device;
-    const data = await this.socket.request('consume', {
+  async getConsumeStream(producerId: string) {
+    const { rtpCapabilities } = this.device!;
+    this.socket.emit('consume', {
       rtpCapabilities,
-      consumerTransportID: this.consumerTransport.id, // might be
+      consumerTransportID: this.consumerTransport!.id, // might be
       producerId: producerId,
     });
-    const { id, kind, rtpParameters } = data;
 
-    let codecOptions = {};
-    const consumer = await this.consumerTransport.consume({
-      id,
-      producerId,
-      kind,
-      rtpParameters,
-      codecOptions,
+    await this.socket.on('consume', async (response: RESPONSE) => {
+      const { id, kind, rtpParameters } = response.data;
+      let codecOptions = {};
+      const consumer = await this.consumerTransport!.consume({
+        id,
+        producerId,
+        kind,
+        rtpParameters,
+        codecOptions,
+      });
+      const stream = new MediaStream();
+      stream.addTrack(consumer.track);
+      this.consume(consumer, stream);
     });
-    const stream = new MediaStream();
-    stream.addTrack(consumer.track);
-
-    return {
-      consumer,
-      stream,
-      kind,
-    };
   }
 
   async listenToSpeakerPermission() {
-    await this.socket.on('speakerPermission', async ({ peerData }) => {
-      if (confirm(`${peerData.name} wants to be a speaker`)) {
-        this.socket.emit('speakerPermissionAccepted', {
-          socketID: peerData.id,
-        });
+    await this.socket.on(
+      'speakerPermission',
+      async ({
+        peerData,
+      }: {
+        peerData: {
+          id: string;
+          name: string;
+        };
+      }) => {
+        if (confirm(`${peerData.name} wants to be a speaker`)) {
+          this.socket.emit('speakerPermissionAccepted', {
+            socketID: peerData.id,
+          });
+        }
       }
-    });
+    );
   }
 
   async beASpeaker() {
-    await this.socket.request('beASpeaker');
-    this.socket.on('speakerAccepted', async ({ peerData }) => {
-      if (peerData) {
-        this.event(_EVENTS.defaultSpeaker);
-      } else {
-        this.event(_EVENTS.defaultListener);
+    await this.socket.emit('beASpeaker');
+    this.socket.on(
+      'speakerAccepted',
+      async ({
+        peerData,
+      }: {
+        peerData: {
+          id: string;
+          name: string;
+        };
+      }) => {
+        if (peerData) {
+          this.event(_EVENTS.defaultSpeaker);
+        } else {
+          this.event(_EVENTS.defaultListener);
+        }
       }
-    });
+    );
     this.event(_EVENTS.disableSpeaker);
   }
 
-  closeProducer(type) {
-    if (!this.producerLabel.has(type)) {
+  closeProducer(type: string) {
+    if (!this.producerLabel[type]) {
       console.log('there is no producer for this type ' + type);
       return;
     }
-    let producerId = this.producerLabel.get(type);
+    let producerId = this.producerLabel[type];
     this.socket.emit('producerClosed', {
       producerId,
     });
-    this.producers.get(producerId).close();
-    this.producers.delete(producerId);
-    this.producerLabel.delete(type);
+
+    this.producers[producerId].close();
+    delete this.producers[producerId];
+    delete this.producerLabel[type];
 
     switch (type) {
       case mediaType.audio:
@@ -454,54 +456,47 @@ class RoomClient {
     }
   }
 
-  pauseProducer(type) {
-    if (!this.producerLabel.has(type)) {
+  pauseProducer(type: string) {
+    if (!this.producerLabel[type]) {
       console.log('there is no producer for this type ' + type);
       return;
     }
-    let producerId = this.producerLabel.get(type);
-    this.producers.get(producerId).pause();
+    let producerId = this.producerLabel[type];
+    this.producers[producerId].pause();
   }
 
-  resumeProducer(type) {
-    if (!this.producerLabel.has(type)) {
+  resumeProducer(type: string) {
+    if (!this.producerLabel[type]) {
       console.log('there is no producer for this type ' + type);
       return;
     }
-    let producerId = this.producerLabel.get(type);
-    this.producers.get(producerId).resume();
+    let producerId = this.producerLabel[type];
+    this.producers[producerId].resume();
   }
 
-  removeConsumer(consumerID) {
-    let elem = document.getElementById(consumerID);
-    elem.srcObject.getTracks().forEach(function (track) {
+  removeConsumer(consumerID: string) {
+    let elem: any = document.getElementById(consumerID);
+    elem.srcObject!.getTracks().forEach(function (track: any) {
       track.stop();
     });
     elem.parentNode.removeChild(elem);
 
-    this.consumers.delete(consumerID);
+    delete this.consumers[consumerID];
   }
 
-  exit(offline = false) {
-    let clean = function () {
+  async exit(offline = false) {
+    let clean = () => {
       this._isOpen = false;
-      this.consumerTransport.close();
-      this.producerTransport.close();
+      this.consumerTransport!.close();
+      this.producerTransport!.close();
       this.socket.off('disconnect');
       this.socket.off('newProducers');
       this.socket.off('consumerClosed');
-    }.bind(this);
+    };
 
     if (!offline) {
-      this.socket
-        .request('exitRoom')
-        .then(e => console.log(e))
-        .catch(e => console.warn(e))
-        .finally(
-          function () {
-            clean();
-          }.bind(this)
-        );
+      await this.socket.emit('exitRoom');
+      clean();
     } else {
       clean();
     }
@@ -510,24 +505,18 @@ class RoomClient {
   }
 
   ///////  HELPERS //////////
-
-  async roomInfo() {
-    let info = await this.socket.request('getMyPeerInfo');
-    return info;
-  }
-
   static get mediaType() {
     return mediaType;
   }
 
-  event(evt) {
-    if (this.eventListeners.has(evt)) {
-      this.eventListeners.get(evt).forEach(callback => callback());
+  event(evt: string) {
+    if (this.eventListeners[evt]) {
+      this.eventListeners[evt].forEach((callback: any) => callback());
     }
   }
 
-  on(evt, callback) {
-    this.eventListeners.get(evt).push(callback);
+  on(evt: string, callback: any) {
+    this.eventListeners[evt].push(callback);
   }
 
   //////// GETTERS ////////

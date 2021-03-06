@@ -310,8 +310,8 @@ class RoomClient {
     elem = document.createElement('audio');
     elem.srcObject = stream;
     elem.id = consumer.id;
-    elem.playsinline = false;
     elem.autoplay = true;
+    console.log(elem);
     this.remoteAudioEl.appendChild(elem);
     consumer.on('trackended', () => {
       this.removeConsumer(consumer.id);
@@ -347,6 +347,7 @@ class RoomClient {
 
   async listenToSpeakerPermission() {
     await this.socket.on('speakerPermission', async ({ peerData }) => {
+      window.focus();
       if (confirm(`${peerData.name} wants to be a speaker`)) {
         this.socket.emit('speakerPermissionAccepted', {
           socketID: peerData.id,
