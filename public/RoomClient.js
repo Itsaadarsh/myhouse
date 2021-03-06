@@ -33,22 +33,17 @@ class RoomClient {
 
     this._isOpen = false;
     this.eventListeners = new Map();
-    Object.keys(_EVENTS).forEach(
-      function (evt) {
-        this.eventListeners.set(evt, []);
-      }.bind(this)
-    );
+    Object.keys(_EVENTS).forEach(evt => {
+      this.eventListeners.set(evt, []);
+    });
 
-    this.createRoom(roomID).then(
-      function () {
-        setTimeout(async () => {
-          await this.join(name, roomID);
-        }, 100);
-        this.initSockets();
-        this._isOpen = true;
-        successCallback();
-      }.bind(this)
-    );
+    this.createRoom(roomID).then(() => {
+      setTimeout(async () => {
+        this.join(name, roomID);
+      }, 100);
+      this._isOpen = true;
+      successCallback();
+    });
   }
 
   ////////// INIT /////////
@@ -72,8 +67,8 @@ class RoomClient {
         console.log(response.data);
         let device = await this.loadDevice(response.data);
         this.device = device;
-        await this.initTransports(device);
-        this.socket.emit('getProducers');
+        this.initSockets();
+        this.initTransports(device);
         await this.socket.on('getMyPeerInfo', async ({ data }) => {
           console.log(data);
           if (data.peers[data.peers.length - 1].isListener) {
@@ -82,6 +77,9 @@ class RoomClient {
             await this.listenToSpeakerPermission();
           }
         });
+        setTimeout(() => {
+          this.socket.emit('getProducers');
+        }, 1000);
       });
     } catch (err) {
       console.log(err);
@@ -212,13 +210,10 @@ class RoomClient {
   }
 
   initSockets() {
-    this.socket.on(
-      'consumerClosed',
-      function ({ consumerID }) {
-        console.log('closing consumer:', consumerID);
-        this.removeConsumer(consumerID);
-      }.bind(this)
-    );
+    this.socket.on('consumerClosed', ({ consumerID }) => {
+      console.log('closing consumer:', consumerID);
+      this.removeConsumer(consumerID);
+    });
 
     this.socket.on('newProducers', async data => {
       console.log('new producers', data);
@@ -318,18 +313,12 @@ class RoomClient {
     elem.playsinline = false;
     elem.autoplay = true;
     this.remoteAudioEl.appendChild(elem);
-    consumer.on(
-      'trackended',
-      function () {
-        this.removeConsumer(consumer.id);
-      }.bind(this)
-    );
-    consumer.on(
-      'transportclose',
-      function () {
-        this.removeConsumer(consumer.id);
-      }.bind(this)
-    );
+    consumer.on('trackended', () => {
+      this.removeConsumer(consumer.id);
+    });
+    consumer.on('transportclose', () => {
+      this.removeConsumer(consumer.id);
+    });
   }
 
   async getConsumeStream(producerId) {
@@ -387,6 +376,7 @@ class RoomClient {
     this.socket.emit('producerClosed', {
       producerId,
     });
+
     this.producers.get(producerId).close();
     this.producers.delete(producerId);
     this.producerLabel.delete(type);
@@ -426,26 +416,19 @@ class RoomClient {
     this.consumers.delete(consumerID);
   }
 
-  exit(offline = false) {
-    let clean = function () {
+  async exit(offline = false) {
+    let clean = () => {
       this._isOpen = false;
       this.consumerTransport.close();
       this.producerTransport.close();
       this.socket.off('disconnect');
       this.socket.off('newProducers');
       this.socket.off('consumerClosed');
-    }.bind(this);
+    };
 
     if (!offline) {
-      this.socket
-        .emit('exitRoom')
-        .then(e => console.log(e))
-        .catch(e => console.warn(e))
-        .finally(
-          function () {
-            clean();
-          }.bind(this)
-        );
+      await this.socket.emit('exitRoom');
+      clean();
     } else {
       clean();
     }

@@ -239,25 +239,30 @@ io.on('connection', (socket: mySocket) => {
     roomList[socket.roomID!].closeProducer(socket.id, producerId);
   });
 
-  socket.on('exitRoom', async (_, callback) => {
+  socket.on('exitRoom', async () => {
     customLogs(`EXIT ROOM`, roomList, socket);
     if (!roomList[socket.roomID!]) {
-      callback({
-        error: 'Room not available',
+      return socket.emit('produce', {
+        msg: 'Room does not exist!',
+        data: null,
+        status: 400,
       });
-      return;
     }
     await roomList[socket.roomID!].removePeer(socket.id);
     if (Object.keys(roomList[socket.roomID!].getPeers()).length === 0) {
       delete roomList[socket.roomID!];
     }
     socket.roomID = null;
-    callback('ROOM EXITED');
+    return;
   });
 
-  socket.on('beASpeaker', async (_, callback) => {
+  socket.on('beASpeaker', async () => {
     if (!roomList[socket.roomID!]) {
-      return callback({ error: 'No ROOM found' });
+      return socket.emit('produce', {
+        msg: 'Room does not exist!',
+        data: null,
+        status: 400,
+      });
     }
 
     const admin = roomList[socket.roomID!].getAdmin();
@@ -271,8 +276,7 @@ io.on('connection', (socket: mySocket) => {
         },
       });
     }
-
-    callback({});
+    return;
   });
 
   socket.on('speakerPermissionAccepted', async ({ socketID }: { socketID: string }, _) => {
