@@ -50,7 +50,7 @@ class Room implements ROOM {
     return producerList;
   }
 
-  getRTPCapabilities() {
+  async getRTPCapabilities() {
     return this.router.rtpCapabilities;
   }
 
@@ -86,6 +86,7 @@ class Room implements ROOM {
 
     customLogs(`----ADDING TRANSPORT----- || ${transport.id}`);
     this.peers[socketID].addTransport(transport);
+
     return {
       params: {
         id: transport.id,

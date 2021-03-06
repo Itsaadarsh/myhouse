@@ -95,75 +95,116 @@ io.on('connection', (socket: mySocket) => {
     socket.emit('newProducers', getProducerList);
   });
 
-  socket.on('getRouterRtpCapabilities', () => {
+  socket.on('getRouterRtpCapabilities', async () => {
     customLogs('GET ROUTER RTP CAPABILITIES', roomList, socket);
+    const data = await roomList[socket.roomID!].getRTPCapabilities();
     socket.emit('getRouterRtpCapabilities', {
       msg: 'Router Capabilities',
-      data: roomList[socket.roomID!].getRTPCapabilities(),
+      data,
       status: 200,
     });
   });
 
-  socket.on('createWebRtcTransport', async (_, callback) => {
+  socket.on('createWebRtcProducerTransport', async () => {
     customLogs('CREATE WEBRTC TRANSPORTs', roomList, socket);
     try {
       const { params } = await roomList[socket.roomID!].createWebRTCTransport(socket.id);
-      callback(params);
+      await socket.emit('createWebRtcProducerTransport', {
+        msg: 'Creating WEBRTC transport',
+        data: params,
+        status: 200,
+      });
     } catch (err) {
-      console.error(err);
-      callback({
-        error: err.message,
+      console.log(err);
+      socket.emit('createWebRtcProducerTransport', {
+        msg: `Something went wrong at createRoom event`,
+        data: null,
+        status: 400,
+      });
+    }
+  });
+
+  socket.on('createWebRtcConsumerTransport', async () => {
+    customLogs('CREATE WEBRTC TRANSPORTs', roomList, socket);
+    try {
+      const { params } = await roomList[socket.roomID!].createWebRTCTransport(socket.id);
+      await socket.emit('createWebRtcConsumerTransport', {
+        msg: 'Creating WEBRTC transport',
+        data: params,
+        status: 200,
+      });
+    } catch (err) {
+      console.log(err);
+      socket.emit('createWebRtcConsumerTransport', {
+        msg: `Something went wrong at createRoom event`,
+        data: null,
+        status: 400,
       });
     }
   });
 
   socket.on(
     'connectTransport',
-    async (
-      { transportID, dtlsParameters }: { transportID: string; dtlsParameters: DtlsParameters },
-      callback
-    ) => {
+    async ({ transportID, dtlsParameters }: { transportID: string; dtlsParameters: DtlsParameters }) => {
       customLogs('CONNECT TRANSPORT', roomList, socket);
       if (!roomList[socket.roomID!]) return;
       await roomList[socket.roomID!].connectPeerTransport(socket.id, transportID, dtlsParameters);
-      callback('Success');
     }
   );
 
   socket.on(
     'produce',
-    async (
-      {
-        kind,
-        rtpParameters,
-        produceTransportID,
-      }: { kind: MediaKind; rtpParameters: RtpParameters; produceTransportID: string },
-      callback
-    ) => {
-      if (!roomList[socket.roomID!]) {
-        return callback({ error: 'No ROOM found' });
+    async ({
+      kind,
+      rtpParameters,
+      produceTransportID,
+    }: {
+      kind: MediaKind;
+      rtpParameters: RtpParameters;
+      produceTransportID: string;
+    }) => {
+      try {
+        if (!roomList[socket.roomID!]) {
+          return socket.emit('produce', {
+            msg: 'Room does not exist!',
+            data: null,
+            status: 400,
+          });
+        }
+        const producerId = await roomList[socket.roomID!].produce(
+          socket.id,
+          produceTransportID,
+          rtpParameters,
+          kind
+        );
+        customLogs(`PRODUCING || TYPE : ${kind}`, roomList, socket);
+        return socket.emit('produce', {
+          msg: 'Producer created',
+          data: { producerId },
+          status: 200,
+        });
+      } catch (err) {
+        console.log(err);
+        return socket.emit('createWebRtcTransport', {
+          msg: `Something went wrong at createRoom event`,
+          data: null,
+          status: 400,
+        });
       }
-      const producerId = await roomList[socket.roomID!].produce(
-        socket.id,
-        produceTransportID,
-        rtpParameters,
-        kind
-      );
-      customLogs(`PRODUCING || TYPE : ${kind}`, roomList, socket);
-      callback({ producerId });
     }
   );
 
   socket.on(
     'consume',
-    async (
-      {
-        consumerTransportID,
-        producerId,
-        rtpCapabilities,
-      }: { consumerTransportID: string; producerId: string; rtpCapabilities: RtpCapabilities },
-      callback
-    ) => {
+    async ({
+      consumerTransportID,
+      producerId,
+      rtpCapabilities,
+    }: {
+      consumerTransportID: string;
+      producerId: string;
+      rtpCapabilities: RtpCapabilities;
+    }) => {
       const params = await roomList[socket.roomID!].consume(
         socket.id,
         consumerTransportID,
@@ -171,12 +212,20 @@ io.on('connection', (socket: mySocket) => {
         rtpCapabilities
       );
       customLogs(`CONSUMING || CONSUMER ID : ${params?.id} || PRODUCER ID : ${producerId}`, roomList, socket);
-      callback(params);
+      socket.emit('consume', {
+        msg: 'Sending consumer params',
+        data: params,
+        status: 200,
+      });
     }
   );
 
-  socket.on('getMyPeerInfo', async (_, callback) => {
-    callback(roomList[socket.roomID!].getAllPeerInfo());
+  socket.on('getMyPeerInfo', async () => {
+    socket.emit('getMyPeerInfo', {
+      msg: 'All peers info',
+      data: roomList[socket.roomID!].getAllPeerInfo(),
+      status: 200,
+    });
   });
 
   socket.on('disconnect', () => {
