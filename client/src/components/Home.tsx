@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import RoomClient from '../utils/RoomClient';
 import CreateRoomPopup from './CreateRoomPopup';
 
 const socket = io('http://localhost:4000/', { transports: ['websocket', 'polling', 'flashsocket'] });
 
 function Home() {
-  const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => {
+    // new RoomClient()
+  });
 
   const togglePopup = () => {
-    setIsOpen(!isOpen);
+    // socket.on('')
   };
 
   return (

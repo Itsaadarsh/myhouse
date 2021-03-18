@@ -45,6 +45,25 @@ let roomList: ALLROOMS = {};
 })();
 
 io.on('connection', (socket: mySocket) => {
+  socket.on('getAllOpenRooms', async () => {
+    if (Object.keys(roomList).length === 0) {
+      return socket.emit('getAllOpenRooms', {
+        msg: 'There are no open rooms',
+        data: null,
+        status: 200,
+      });
+    }
+    const getRoomList: Array<any> = [];
+    Object.keys(roomList).forEach(room => {
+      getRoomList.push({ id: roomList[room].id, peers: roomList[room].peers });
+    });
+    return socket.emit('getAllOpenRooms', {
+      msg: 'List of all open rooms',
+      data: getRoomList,
+      status: 200,
+    });
+  });
+
   socket.on('createRoom', async ({ roomID }: { roomID: string }) => {
     try {
       if (roomList[roomID]) {

@@ -48,6 +48,17 @@ class RoomClient {
 
   ////////// INIT /////////
 
+  async getAllRooms() {
+    try {
+      this.socket.emit('getAllOpenRooms');
+      await this.socket.on('getAllOpenRooms', async response => {
+        console.log(response);
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async createRoom(roomID) {
     try {
       await this.socket.emit('createRoom', {

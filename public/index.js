@@ -7,19 +7,7 @@ const socket = io();
 
 let producer = null;
 
-nameInput.value = 'bob' + Math.round(Math.random() * 1000);
-
-// socket.request = function request(type, data = {}) {
-//   return new Promise((resolve, reject) => {
-//     socket.emit(type, data, data => {
-//       if (data.error) {
-//         reject(data.error);
-//       } else {
-//         resolve(data);
-//       }
-//     });
-//   });
-// };
+nameInput.value = 'user' + Math.round(Math.random() * 1000);
 
 let rc = null;
 
@@ -28,6 +16,7 @@ function joinRoom(name, roomID) {
     console.log('already connected to a room');
   } else {
     rc = new RoomClient(localMedia, remoteAudios, window.mediasoupClient, socket, roomID, name, roomOpen);
+    rc.getAllRooms();
     addListeners();
   }
 }

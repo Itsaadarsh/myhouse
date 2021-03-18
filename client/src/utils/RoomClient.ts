@@ -529,3 +529,5 @@ class RoomClient {
     return _EVENTS;
   }
 }
+
+export default RoomClient;
