@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ts-node-dev  src",
     "watch": "tsc -w",
-    "prod": "PROD=true node dist/index.js"
+    "prod": "PROD=true node ./dist/index.js"
   },
   "repository": {
     "type": "git",
