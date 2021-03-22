@@ -21,17 +21,13 @@ class RoomClient {
     this.consumerTransport = null;
     this.device = null;
     this.roomID = roomID;
-    this.peerSet = new Map();
+    this.peerMap = new Map();
     this.consumers = new Map();
     this.producers = new Map();
-
-    /**
-     * map that contains a mediatype as key and producerId as value
-     */
     this.producerLabel = new Map();
+    this.eventListeners = new Map();
 
     this._isOpen = false;
-    this.eventListeners = new Map();
     Object.keys(_EVENTS).forEach(evt => {
       this.eventListeners.set(evt, []);
     });
@@ -45,14 +41,10 @@ class RoomClient {
     });
   }
 
-  ////////// INIT /////////
-
   async getAllRooms() {
     try {
       this.socket.emit('getAllOpenRooms');
-      await this.socket.on('getAllOpenRooms', async response => {
-        console.log(response);
-      });
+      await this.socket.on('getAllOpenRooms', async response => {});
     } catch (err) {
       console.log(err);
     }
@@ -74,22 +66,21 @@ class RoomClient {
       await this.socket.emit('getRouterRtpCapabilities');
       this.socket.on('getRouterRtpCapabilities', async response => {
         this.socket.emit('getMyPeerInfo');
-        console.log(response.data);
+        this.initSockets();
         let device = await this.loadDevice(response.data);
         this.device = device;
-        this.initSockets();
         this.initTransports(device);
-        await this.socket.on('getMyPeerInfo', async ({ data }) => {
-          console.log(data);
-          if (data.peers[data.peers.length - 1].isListener) {
+        setTimeout(async () => {
+          const obj = Object.fromEntries(this.peerMap);
+          const isPeerListener = obj[Object.keys(obj)[Object.keys(obj).length - 1]].isListener;
+          if (isPeerListener) {
             this.event(_EVENTS.defaultListener);
           } else {
+            this.event(_EVENTS.defaultSpeaker);
             await this.listenToSpeakerPermission();
           }
-        });
-        setTimeout(() => {
           this.socket.emit('getProducers');
-        }, 1000);
+        }, 500);
       });
     } catch (err) {
       console.log(err);
@@ -103,7 +94,7 @@ class RoomClient {
     let listenerList = document.createElement('ul');
     listenerList.innerHTML = 'Listener';
     listenerList.id = 'listener';
-    this.peerSet.forEach(peer => {
+    this.peerMap.forEach(peer => {
       let li = document.createElement('li');
       if (peer.isSpeaker) {
         console.log('render');
@@ -256,7 +247,7 @@ class RoomClient {
 
     this.socket.on('getMyPeerInfo', async ({ data }) => {
       data.peers.forEach(peer => {
-        this.peerSet.set(peer.id, peer);
+        this.peerMap.set(peer.id, peer);
       });
       while (document.getElementById('remoteAudios').hasChildNodes()) {
         document
@@ -409,6 +400,7 @@ class RoomClient {
           },
         },
       });
+
       if (await dialogBoxConfig) {
         this.socket.emit('speakerPermissionAccepted', {
           socketID: peerData.id,

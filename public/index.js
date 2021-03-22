@@ -16,7 +16,7 @@ function joinRoom(name, roomID) {
 
 function roomOpen() {
   login.style.display = 'none';
-  reveal(startAudioButton);
+  hide(startAudioButton);
   hide(stopAudioButton);
   reveal(exitButton);
   control.className = '';
@@ -47,12 +47,14 @@ function addListeners() {
   });
 
   rc.on(RoomClient.EVENTS.defaultListener, () => {
+    reveal(startAudioButton);
     stopAudioButton.disabled = true;
     startAudioButton.disabled = true;
     beASpeaker.className = '';
   });
 
   rc.on(RoomClient.EVENTS.defaultSpeaker, () => {
+    reveal(startAudioButton);
     stopAudioButton.disabled = false;
     startAudioButton.disabled = false;
     beASpeaker.className = 'hidden';

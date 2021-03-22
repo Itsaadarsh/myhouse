@@ -307,12 +307,6 @@ io.on('connection', (socket: mySocket) => {
     await roomList[socket.roomID!].becomeASpeaker(socketID);
     const getPeer = roomList[socket.roomID!].getPeer(socketID);
 
-    socket.broadcast.emit('getMyPeerInfo', {
-      msg: 'All peers info',
-      data: roomList[socket.roomID!].getAllPeerInfo(),
-      status: 200,
-    });
-
     if (getPeer !== null) {
       io.to(socketID).emit('speakerAccepted', {
         peerData: {
@@ -324,6 +318,11 @@ io.on('connection', (socket: mySocket) => {
         },
       });
     }
+    socket.broadcast.emit('getMyPeerInfo', {
+      msg: 'All peers info',
+      data: roomList[socket.roomID!].getAllPeerInfo(),
+      status: 200,
+    });
   });
 });
 
