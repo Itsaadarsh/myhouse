@@ -1,7 +1,6 @@
 import config from './config';
 import express from 'express';
 import path from 'path';
-import fs from 'fs';
 import ALLROOMS from './types/allRooms.types.';
 import Room from './Room';
 import Peer from './Peer';
@@ -10,15 +9,10 @@ import customLogs from './utils/customConsoleLogs';
 import { Server } from 'socket.io';
 import { DtlsParameters, MediaKind, RtpCapabilities, RtpParameters, Worker } from 'mediasoup/lib/types';
 import { createWorkers } from './utils/createWorker';
-const https = require('httpolyglot');
+const http = require('http');
 
 const app = express();
-const options = {
-  keys: fs.readFileSync(path.join(__dirname, config.sslKey)),
-  cert: fs.readFileSync(path.join(__dirname, config.sslCrt)),
-};
-
-const httpsServer = https.createServer(options, app);
+const httpsServer = http.createServer(app);
 const io = new Server(httpsServer);
 httpsServer.listen(config.listenPort, () =>
   console.log(`Server started at http://localhost:${config.listenPort}/`)

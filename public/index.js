@@ -49,9 +49,8 @@ function addListeners() {
   });
 
   rc.on(RoomClient.EVENTS.defaultListener, () => {
-    reveal(startAudioButton);
-    stopAudioButton.disabled = true;
-    startAudioButton.disabled = true;
+    hide(startAudioButton);
+    hide(stopAudioButton);
     beASpeaker.className = '';
   });
 
@@ -62,7 +61,7 @@ function addListeners() {
     beASpeaker.style.display = 'none';
   });
   rc.on(RoomClient.EVENTS.disableSpeaker, () => {
-    beASpeaker.disabled = true;
+    beASpeaker.innerText = 'Waiting for Speaker to accept you request.....';
   });
 }
 

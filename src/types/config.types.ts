@@ -3,8 +3,6 @@ import { RouterOptions, WebRtcTransportOptions, WorkerSettings } from 'mediasoup
 export default interface CONFIGTYPES {
   listenIp: string;
   listenPort: number;
-  sslCrt: string;
-  sslKey: string;
   mediasoup: {
     numWorkers: number;
     worker: WorkerSettings;
