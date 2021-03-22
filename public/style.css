@@ -1,0 +1,17 @@
+.hidden {
+  display: none;
+}
+
+#login {
+  display: flex;
+  padding: 5rem;
+  align-items: center;
+  flex-direction: column;
+}
+
+#control {
+  display: flex;
+  padding: 5rem;
+  align-items: center;
+  flex-direction: column;
+}

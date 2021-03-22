@@ -1,10 +1,4 @@
-// if (location.href.substr(0, 5) !== 'https') {
-//   console.log('adsasd');
-//   location.href = 'https' + location.href.substr(4, location.href.length - 4);
-// }
-
 const socket = io();
-
 let producer = null;
 
 nameInput.value = 'user' + Math.round(Math.random() * 1000);
@@ -15,14 +9,13 @@ function joinRoom(name, roomID) {
   if (rc && rc.isOpen()) {
     console.log('already connected to a room');
   } else {
-    rc = new RoomClient(localMedia, remoteAudios, window.mediasoupClient, socket, roomID, name, roomOpen);
-    rc.getAllRooms();
+    rc = new RoomClient(remoteAudios, window.mediasoupClient, socket, roomID, name, roomOpen);
     addListeners();
   }
 }
 
 function roomOpen() {
-  login.className = 'hidden';
+  login.style.display = 'none';
   reveal(startAudioButton);
   hide(stopAudioButton);
   reveal(exitButton);

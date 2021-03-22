@@ -11,9 +11,8 @@ const _EVENTS = {
 };
 
 class RoomClient {
-  constructor(localMediaEl, remoteAudioEl, mediasoupClient, socket, roomID, name, successCallback) {
+  constructor(remoteAudioEl, mediasoupClient, socket, roomID, name, successCallback) {
     this.name = name;
-    this.localMediaEl = localMediaEl;
     this.remoteAudioEl = remoteAudioEl;
     this.mediasoupClient = mediasoupClient;
 
@@ -22,7 +21,7 @@ class RoomClient {
     this.consumerTransport = null;
     this.device = null;
     this.roomID = roomID;
-
+    this.peerSet = new Map();
     this.consumers = new Map();
     this.producers = new Map();
 
@@ -95,6 +94,28 @@ class RoomClient {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  async displayPeers() {
+    let speakerList = document.createElement('ul');
+    speakerList.innerHTML = 'Speaker';
+    speakerList.id = 'speaker';
+    let listenerList = document.createElement('ul');
+    listenerList.innerHTML = 'Listener';
+    listenerList.id = 'listener';
+    this.peerSet.forEach(peer => {
+      let li = document.createElement('li');
+      if (peer.isSpeaker) {
+        console.log('render');
+        li.innerHTML = peer.name;
+        speakerList.appendChild(li);
+      } else if (peer.isListener) {
+        li.innerHTML = peer.name;
+        listenerList.appendChild(li);
+      }
+    });
+    this.remoteAudioEl.appendChild(speakerList);
+    this.remoteAudioEl.appendChild(listenerList);
   }
 
   async loadDevice(routerRtpCapabilities) {
@@ -233,6 +254,18 @@ class RoomClient {
       }
     });
 
+    this.socket.on('getMyPeerInfo', async ({ data }) => {
+      data.peers.forEach(peer => {
+        this.peerSet.set(peer.id, peer);
+      });
+      while (document.getElementById('remoteAudios').hasChildNodes()) {
+        document
+          .getElementById('remoteAudios')
+          .removeChild(document.getElementById('remoteAudios').firstChild);
+      }
+      this.displayPeers();
+    });
+
     this.socket.on('disconnect', () => {
       this.exit(true);
     });
@@ -358,8 +391,25 @@ class RoomClient {
 
   async listenToSpeakerPermission() {
     await this.socket.on('speakerPermission', async ({ peerData }) => {
-      window.focus();
-      if (confirm(`${peerData.name} wants to be a speaker`)) {
+      const dialogBoxConfig = swal(`${peerData.name} wants to be a speaker`, {
+        buttons: {
+          cancel: {
+            text: 'Decline',
+            value: false,
+            visible: true,
+            className: '',
+            closeModal: true,
+          },
+          confirm: {
+            text: 'Accept',
+            value: true,
+            visible: true,
+            className: '',
+            closeModal: true,
+          },
+        },
+      });
+      if (await dialogBoxConfig) {
         this.socket.emit('speakerPermissionAccepted', {
           socketID: peerData.id,
         });
@@ -444,8 +494,8 @@ class RoomClient {
     } else {
       clean();
     }
-
     this.event(_EVENTS.exitRoom);
+    location.reload();
   }
 
   ///////  HELPERS //////////

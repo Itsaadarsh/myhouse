@@ -99,6 +99,11 @@ io.on('connection', (socket: mySocket) => {
       roomList[roomID].addPeer(new Peer(socket.id, name, false));
     }
     socket.roomID! = roomID;
+    socket.broadcast.emit('getMyPeerInfo', {
+      msg: 'All peers info',
+      data: roomList[socket.roomID!].getAllPeerInfo(),
+      status: 200,
+    });
     return socket.emit('join', {
       msg: `User successfully joined room ${socket.roomID!}`,
       data: { roomID },
@@ -301,6 +306,12 @@ io.on('connection', (socket: mySocket) => {
   socket.on('speakerPermissionAccepted', async ({ socketID }: { socketID: string }, _) => {
     await roomList[socket.roomID!].becomeASpeaker(socketID);
     const getPeer = roomList[socket.roomID!].getPeer(socketID);
+
+    socket.broadcast.emit('getMyPeerInfo', {
+      msg: 'All peers info',
+      data: roomList[socket.roomID!].getAllPeerInfo(),
+      status: 200,
+    });
 
     if (getPeer !== null) {
       io.to(socketID).emit('speakerAccepted', {
