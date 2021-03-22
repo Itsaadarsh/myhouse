@@ -126,7 +126,6 @@ class RoomClient {
   }
 
   async initTransports(device) {
-    // init producerTransport
     {
       await this.socket.emit('createWebRtcProducerTransport');
       await this.socket.on('createWebRtcProducerTransport', async response => {
@@ -189,7 +188,6 @@ class RoomClient {
       });
     }
 
-    // init consumerTransport
     {
       await this.socket.emit('createWebRtcConsumerTransport');
       this.socket.on('createWebRtcConsumerTransport', async response => {
@@ -197,7 +195,6 @@ class RoomClient {
           console.error(response.msg);
           return;
         }
-        // only one needed
         this.consumerTransport = device.createRecvTransport(response.data);
         console.log(this.consumerTransport.id);
         this.consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
@@ -249,6 +246,19 @@ class RoomClient {
       data.peers.forEach(peer => {
         this.peerMap.set(peer.id, peer);
       });
+      while (document.getElementById('remoteAudios').hasChildNodes()) {
+        document
+          .getElementById('remoteAudios')
+          .removeChild(document.getElementById('remoteAudios').firstChild);
+      }
+      this.displayPeers();
+      console.log(this.peerMap);
+    });
+
+    this.socket.on('removepeer', ({ data }) => {
+      if (this.peerMap.has(data)) {
+        this.peerMap.delete(data);
+      }
       while (document.getElementById('remoteAudios').hasChildNodes()) {
         document
           .getElementById('remoteAudios')

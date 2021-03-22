@@ -99,7 +99,7 @@ io.on('connection', (socket: mySocket) => {
       roomList[roomID].addPeer(new Peer(socket.id, name, false));
     }
     socket.roomID! = roomID;
-    socket.broadcast.emit('getMyPeerInfo', {
+    io.sockets.emit('getMyPeerInfo', {
       msg: 'All peers info',
       data: roomList[socket.roomID!].getAllPeerInfo(),
       status: 200,
@@ -252,10 +252,15 @@ io.on('connection', (socket: mySocket) => {
     });
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     customLogs(`DISCONNECTED`, roomList, socket);
     if (!socket.roomID!) return;
-    roomList[socket.roomID!].removePeer(socket.id);
+    await roomList[socket.roomID!].removePeer(socket.id);
+    await io.sockets.emit('removepeer', {
+      msg: 'Removing disconnected peer',
+      data: socket.id,
+      status: 200,
+    });
   });
 
   socket.on('producerClosed', ({ producerId }: { producerId: string }) => {
@@ -277,6 +282,11 @@ io.on('connection', (socket: mySocket) => {
       delete roomList[socket.roomID!];
     }
     socket.roomID = null;
+    await io.sockets.emit('removepeer', {
+      msg: 'Removing disconnected peer',
+      data: socket.id,
+      status: 200,
+    });
     return;
   });
 
@@ -318,7 +328,7 @@ io.on('connection', (socket: mySocket) => {
         },
       });
     }
-    socket.broadcast.emit('getMyPeerInfo', {
+    io.sockets.emit('getMyPeerInfo', {
       msg: 'All peers info',
       data: roomList[socket.roomID!].getAllPeerInfo(),
       status: 200,

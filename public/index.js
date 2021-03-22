@@ -16,18 +16,20 @@ function joinRoom(name, roomID) {
 
 function roomOpen() {
   login.style.display = 'none';
+  console.log(startAudioButton);
   hide(startAudioButton);
   hide(stopAudioButton);
   reveal(exitButton);
+  reveal(audioOptions);
   control.className = '';
 }
 
 function hide(elem) {
-  elem.className = 'hidden';
+  elem.style.display = 'none';
 }
 
 function reveal(elem) {
-  elem.className = '';
+  elem.style.display = 'block';
 }
 
 function addListeners() {
@@ -57,7 +59,7 @@ function addListeners() {
     reveal(startAudioButton);
     stopAudioButton.disabled = false;
     startAudioButton.disabled = false;
-    beASpeaker.className = 'hidden';
+    beASpeaker.style.display = 'none';
   });
   rc.on(RoomClient.EVENTS.disableSpeaker, () => {
     beASpeaker.disabled = true;

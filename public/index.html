@@ -5,27 +5,30 @@
     <script src="modules/mediasoupclient.min.js"></script><script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/EventEmitter/5.2.8/EventEmitter.min.js"></script>
+    <script src="https://kit.fontawesome.com/b0d4caeadc.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
     <script src="RoomClient.js"></script>
     <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
+    <h1 id="header">Welcome to myHouse 🙏</h1>
     <div id="login">
-        <div>
+        <div id='loginInput'>
             RoomID : <input id="roomidInput" value="0123" type="text" />
         </div>
-        <div>
+        <div id='loginInput'>
             Username : <input id='nameInput' value="user" type="text" />
         </div>
         <button id='joinButton' onclick="joinRoom(nameInput.value, roomidInput.value)">Join</button>
     </div>
     <div id="control">
-        <button id='exitButton' class='hidden' onclick="rc.exit()">Exit</button>
-        <div>
-            Audio Output Settings: <select id="audioSelect"></select>
+        <button id='exitButton' class="hidden"  onclick="rc.exit()">Exit</button>
+        <div class='hidden' id='audioOptions'>
+            Audio Output Settings : <select id="audioSelect"></select>
         </div>
-        <button id='startAudioButton' class='hidden' onclick="rc.produce(RoomClient.mediaType.audio, audioSelect.value)">MIC ON</button>
-        <button id='stopAudioButton' class='hidden' onclick="rc.closeProducer(RoomClient.mediaType.audio)">MIC OFF</button>
+        <i id='startAudioButton' class='fas fa-microphone-slash hidden micIcon' onclick="rc.produce(RoomClient.mediaType.audio, audioSelect.value)"></i>
+        <i id='stopAudioButton' class='fas fa-microphone hidden micIcon' onclick="rc.closeProducer(RoomClient.mediaType.audio)"></i>
         <button id='beASpeaker' class='hidden' onclick="rc.beASpeaker()">Request to be a Speaker</button>
     </div>
 
