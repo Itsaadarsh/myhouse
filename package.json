@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node-dev  src",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "prod": "PROD=true node dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/Itsaadarsh/myhouse#readme",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "httpolyglot": "^0.1.2",
     "mediasoup": "^3.6.32",

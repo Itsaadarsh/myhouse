@@ -1,3 +1,4 @@
+require('dotenv').config();
 import config from './config';
 import express from 'express';
 import path from 'path';
@@ -14,11 +15,14 @@ const http = require('http');
 const app = express();
 const httpsServer = http.createServer(app);
 const io = new Server(httpsServer);
-httpsServer.listen(config.listenPort, () =>
-  console.log(`Server started at http://localhost:${config.listenPort}/`)
+httpsServer.listen(process.env.PORT || config.listenPort, () =>
+  console.log(`Server started at http://localhost:${process.env.PORT || config.listenPort}/`)
 );
 
-app.use(express.static(path.join(__dirname, '..', 'public')));
+if (process.env.PROD) {
+  app.use(express.static(path.join(__dirname, '..', 'public')));
+}
+
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
