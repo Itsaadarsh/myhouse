@@ -66,7 +66,8 @@ function addListeners() {
 }
 
 // Load mediaDevice options
-navigator.mediaDevices.enumerateDevices().then(devices =>
+navigator.mediaDevices.enumerateDevices().then(devices => {
+  console.log(devices);
   devices.forEach(device => {
     let el = null;
     if ('audioinput' === device.kind) {
@@ -78,5 +79,5 @@ navigator.mediaDevices.enumerateDevices().then(devices =>
     option.value = device.deviceId;
     option.innerText = device.label;
     el.appendChild(option);
-  })
-);
+  });
+});

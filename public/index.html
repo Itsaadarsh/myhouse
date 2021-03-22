@@ -27,7 +27,7 @@
         <div class='hidden' id='audioOptions'>
             Audio Output Settings : <select id="audioSelect"></select>
         </div>
-        <i id='startAudioButton' class='fas fa-microphone-slash hidden micIcon' onclick="rc.produce(RoomClient.mediaType.audio, audioSelect.value)"></i>
+        <i id='startAudioButton' class='fas fa-microphone-slash hidden micIcon' onclick="rc.produce(RoomClient.mediaType.audio, audioSelect)"></i>
         <i id='stopAudioButton' class='fas fa-microphone hidden micIcon' onclick="rc.closeProducer(RoomClient.mediaType.audio)"></i>
         <button id='beASpeaker' class='hidden' onclick="rc.beASpeaker()">Request to be a Speaker</button>
     </div>

@@ -277,11 +277,12 @@ class RoomClient {
   async produce(type, deviceId = null) {
     let mediaConstraints = {};
     let audio = false;
+    console.log(deviceId);
     switch (type) {
       case mediaType.audio:
         mediaConstraints = {
           audio: {
-            deviceId: deviceId,
+            deviceId: 'abb1f360fed896dd1b1d9e6d29cc25956c5df1a6580f7185c906d358b71c43e0',
           },
           video: false,
         };
