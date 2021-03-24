@@ -6,7 +6,7 @@ import {
   RtpParameters,
   Worker,
 } from 'mediasoup/lib/types';
-import config from './config';
+import { config } from './config';
 import { PEERTYPE, ROOM } from './types/allRooms.types.';
 import customLogs from './utils/customConsoleLogs';
 
@@ -55,23 +55,23 @@ class Room implements ROOM {
   }
 
   async createWebRTCTransport(socketID: string) {
-    const { initialAvailableOutgoingBitrate } = config.mediasoup.webRTCTransport;
-    const maxIncomingBitrate = config.maxIncomingBitrate;
+    const { initialAvailableOutgoingBitrate } = config.mediasoup.webRtcTransport;
+    // const maxIncomingBitrate = config.maxIncomingBitrate;
     const transport = await this.router.createWebRtcTransport({
-      listenIps: config.mediasoup.webRTCTransport.listenIps,
+      listenIps: config.mediasoup.webRtcTransport.listenIps,
       enableUdp: true,
       enableTcp: true,
       preferUdp: true,
       initialAvailableOutgoingBitrate,
     });
 
-    if (maxIncomingBitrate) {
-      try {
-        await transport.setMaxIncomingBitrate(maxIncomingBitrate);
-      } catch (err) {
-        console.error(err);
-      }
-    }
+    // if (maxIncomingBitrate) {
+    //   try {
+    //     await transport.setMaxIncomingBitrate(maxIncomingBitrate);
+    //   } catch (err) {
+    //     console.error(err);
+    //   }
+    // }
 
     transport.on('dtlsstatechange', dtlsState => {
       if (dtlsState === 'closed') {

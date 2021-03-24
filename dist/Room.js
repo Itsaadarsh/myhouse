@@ -12,12 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const config_1 = __importDefault(require("./config"));
+const config_1 = require("./config");
 const customConsoleLogs_1 = __importDefault(require("./utils/customConsoleLogs"));
 class Room {
     constructor(roomID, worker, io) {
         this.id = roomID;
-        const mediaCodecs = config_1.default.mediasoup.router.mediaCodecs;
+        const mediaCodecs = config_1.config.mediasoup.router.mediaCodecs;
         worker
             .createRouter({
             mediaCodecs,
@@ -51,23 +51,14 @@ class Room {
     }
     createWebRTCTransport(socketID) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { initialAvailableOutgoingBitrate } = config_1.default.mediasoup.webRTCTransport;
-            const maxIncomingBitrate = config_1.default.maxIncomingBitrate;
+            const { initialAvailableOutgoingBitrate } = config_1.config.mediasoup.webRtcTransport;
             const transport = yield this.router.createWebRtcTransport({
-                listenIps: config_1.default.mediasoup.webRTCTransport.listenIps,
+                listenIps: config_1.config.mediasoup.webRtcTransport.listenIps,
                 enableUdp: true,
                 enableTcp: true,
                 preferUdp: true,
                 initialAvailableOutgoingBitrate,
             });
-            if (maxIncomingBitrate) {
-                try {
-                    yield transport.setMaxIncomingBitrate(maxIncomingBitrate);
-                }
-                catch (err) {
-                    console.error(err);
-                }
-            }
             transport.on('dtlsstatechange', dtlsState => {
                 if (dtlsState === 'closed') {
                     customConsoleLogs_1.default(`------TRANSPORT CLOSED------- || ${this.peers[socketID].name} CLOSED`);

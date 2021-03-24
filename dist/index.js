@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
-const config_1 = __importDefault(require("./config"));
+const config_1 = require("./config");
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const Room_1 = __importDefault(require("./Room"));
@@ -25,7 +25,7 @@ const http = require('http');
 const app = express_1.default();
 const httpsServer = http.createServer(app);
 const io = new socket_io_1.Server(httpsServer);
-httpsServer.listen(process.env.PORT || config_1.default.listenPort, () => console.log(`Server started at http://localhost:${process.env.PORT || config_1.default.listenPort}/`));
+httpsServer.listen(process.env.PORT || config_1.config.httpPort, () => console.log(`Server started at http://localhost:${process.env.PORT || config_1.config.httpPort}/`));
 if (process.env.PROD) {
     app.use(express_1.default.static(path_1.default.join(__dirname, '..', 'public')));
 }

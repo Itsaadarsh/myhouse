@@ -1,6 +1,6 @@
 import { createWorker } from 'mediasoup';
 import { Worker } from 'mediasoup/lib/types';
-import config from '../config';
+import { config } from '../config';
 
 export const createWorkers = async (workers: Array<Worker>) => {
   let { numWorkers } = config.mediasoup;

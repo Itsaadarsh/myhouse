@@ -1,5 +1,5 @@
 require('dotenv').config();
-import config from './config';
+import { config } from './config';
 import express from 'express';
 import path from 'path';
 import ALLROOMS from './types/allRooms.types.';
@@ -15,8 +15,8 @@ const http = require('http');
 const app = express();
 const httpsServer = http.createServer(app);
 const io = new Server(httpsServer);
-httpsServer.listen(process.env.PORT || config.listenPort, () =>
-  console.log(`Server started at http://localhost:${process.env.PORT || config.listenPort}/`)
+httpsServer.listen(process.env.PORT || config.httpPort, () =>
+  console.log(`Server started at http://localhost:${process.env.PORT || config.httpPort}/`)
 );
 
 if (process.env.PROD) {
