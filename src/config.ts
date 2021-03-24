@@ -30,7 +30,7 @@ const config: CONFIGTYPES = {
       listenIps: [
         {
           ip: '127.0.0.1',
-          announcedIp: undefined,
+          announcedIp: null,
         },
       ],
       initialAvailableOutgoingBitrate: 1000000,

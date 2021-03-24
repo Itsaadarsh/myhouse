@@ -1,4 +1,4 @@
-import { RouterOptions, WebRtcTransportOptions, WorkerSettings } from 'mediasoup/lib/types';
+import { RouterOptions, WorkerSettings } from 'mediasoup/lib/types';
 
 export default interface CONFIGTYPES {
   listenIp: string;
@@ -7,7 +7,7 @@ export default interface CONFIGTYPES {
     numWorkers: number;
     worker: WorkerSettings;
     router: RouterOptions;
-    webRTCTransport: WebRtcTransportOptions;
+    webRTCTransport: any;
   };
   maxIncomingBitrate: number;
 }
