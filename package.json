@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node-dev  src",
-    "watch": "tsc -w",
+    "build": "tsc",
     "prod": "PROD=true node ./dist/index.js"
   },
   "repository": {

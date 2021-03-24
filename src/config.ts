@@ -29,8 +29,8 @@ const config: CONFIGTYPES = {
     webRTCTransport: {
       listenIps: [
         {
-          ip: '0.0.0.0',
-          announcedIp: '127.0.0.1',
+          ip: '127.0.0.1',
+          announcedIp: undefined,
         },
       ],
       initialAvailableOutgoingBitrate: 1000000,
